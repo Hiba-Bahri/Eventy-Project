@@ -94,7 +94,7 @@ class _RegisterState extends State<Register> {
             ),
             const SizedBox(height: 5),
             Lottie.network(
-              'https://lottie.host/dee65a23-907f-4fdc-821b-702d69dbd451/pVbPqEZbdj.json',
+              'https://lottie.host/a1cfb1cc-982e-4bc1-9841-64f773f8d076/ucpvOzo0g8.json',
               height: 200.0,
             ),
             const SizedBox(height: 5),
