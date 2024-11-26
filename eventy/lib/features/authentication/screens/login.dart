@@ -1,5 +1,5 @@
 import 'package:eventy/features/authentication/widgets/login_form.dart';
-import 'package:eventy/features/home.dart';
+import 'package:eventy/features/home/screens/home.dart';
 import 'package:eventy/shared/widgets/toast.dart';
 import 'package:eventy/features/authentication/screens/register.dart';
 import 'package:eventy/core/providers/auth_provider.dart';

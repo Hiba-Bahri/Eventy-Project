@@ -1,6 +1,6 @@
 import 'package:eventy/core/providers/auth_provider.dart';
-import 'package:eventy/features/home.dart';
 import 'package:eventy/features/authentication/screens/login.dart';
+import 'package:eventy/features/navigation_bar.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -22,10 +22,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      
       theme: ThemeData(scaffoldBackgroundColor: const Color.fromARGB(255, 255, 255, 255)),
       home: Consumer<AuthProvider>(
         builder: (context, authProvider, _) {
-          return authProvider.isLoggedIn ? const Home() : const Login();
+          return authProvider.isLoggedIn ? const Navigation_Bar() : const Login();
         },
       )
     );

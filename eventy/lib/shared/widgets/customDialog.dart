@@ -1,4 +1,4 @@
-import 'package:eventy/features/home.dart';
+import 'package:eventy/features/home/screens/home.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 
