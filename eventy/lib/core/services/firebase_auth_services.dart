@@ -89,7 +89,7 @@ class FirebaseAuthService {
       try {
         await _auth.currentUser?.delete();
       } catch (deleteError) {}
-      throw e;
+      rethrow;
     }
   }
 

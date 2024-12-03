@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class UserProfilePage extends StatefulWidget {
-  const UserProfilePage({Key? key}) : super(key: key);
+  const UserProfilePage({super.key});
 
   @override
   _UserProfilePageState createState() => _UserProfilePageState();
@@ -20,11 +20,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   final authProvider = Provider.of<AuthProvider>(context);
 
-  bool _isSigningOut = false;
+  bool isSigningOut = false;
 
-  Future<void> _handleSignOut() async {
+  Future<void> handleSignOut() async {
     setState(() {
-      _isSigningOut = true;
+      isSigningOut = true;
     });
 
     try {
@@ -39,7 +39,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
       showToast(message: "Sign-out failed: $e");
     } finally {
       setState(() {
-        _isSigningOut = false;
+        isSigningOut = false;
       });
     }
   }
@@ -75,7 +75,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
               const UserProfileForm(),
             ],
             ElevatedButton(
-          onPressed: () async => {await _handleSignOut()},
+          onPressed: () async => {await handleSignOut()},
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color.fromARGB(255, 255, 79, 48),
             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -84,7 +84,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             ),
           ),
           child: Center(
-            child: _isSigningOut
+            child: isSigningOut
                 ? const CircularProgressIndicator(color: Colors.white)
                 : const Text(
                     "Sign Out",
@@ -110,12 +110,12 @@ class UserProfileHeader extends StatelessWidget {
   final String address;
 
   const UserProfileHeader({
-    Key? key,
+    super.key,
     required this.name,
     required this.phone,
     required this.email,
     required this.address,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -142,10 +142,10 @@ class UserProfileActions extends StatelessWidget {
   final VoidCallback onToggleExpanded;
 
   const UserProfileActions({
-    Key? key,
+    super.key,
     required this.isExpanded,
     required this.onToggleExpanded,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -169,7 +169,7 @@ class UserProfileActions extends StatelessWidget {
 }
 
 class UserProfileForm extends StatefulWidget {
-  const UserProfileForm({Key? key}) : super(key: key);
+  const UserProfileForm({super.key});
 
   @override
   _UserProfileFormState createState() => _UserProfileFormState();

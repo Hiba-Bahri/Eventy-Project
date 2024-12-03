@@ -6,7 +6,7 @@ class ServiceCard extends StatelessWidget {
   final String description;
   //final String imagePath;
 
-  ServiceCard({
+  const ServiceCard({super.key, 
     required this.title,
     required this.description,
     //required this.imagePath,

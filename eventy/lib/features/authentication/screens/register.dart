@@ -78,7 +78,7 @@ class _RegisterState extends State<Register> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 59, 59, 59),
+      backgroundColor: const Color.fromARGB(255, 124, 123, 123),
       body: SafeArea(
         child: Column(
           children: [
@@ -94,7 +94,7 @@ class _RegisterState extends State<Register> {
             ),
             const SizedBox(height: 5),
             Lottie.network(
-              'https://lottie.host/ab8692ab-6ea3-44f9-9805-a37d96ab09a1/GAtTk9VcKH.json',
+              'https://lottie.host/a1cfb1cc-982e-4bc1-9841-64f773f8d076/ucpvOzo0g8.json',
               height: 200.0,
             ),
             const SizedBox(height: 5),

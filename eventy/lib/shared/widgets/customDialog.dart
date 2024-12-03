@@ -36,7 +36,7 @@ void showCustomDialog({
               Text(
                 greeting,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -46,7 +46,7 @@ void showCustomDialog({
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,
                 ),
@@ -73,7 +73,7 @@ void showCustomDialog({
                 ),
                 child: Text(
                   btn,
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: Colors.white),
                 ),
               ),
             ],

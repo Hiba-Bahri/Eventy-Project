@@ -5,7 +5,7 @@ class BorderedImage extends StatelessWidget {
   final String imagePath;
   final double borderRadius;
 
-  BorderedImage({
+  const BorderedImage({super.key, 
     required this.imagePath,
     this.borderRadius = 8.0,
   });

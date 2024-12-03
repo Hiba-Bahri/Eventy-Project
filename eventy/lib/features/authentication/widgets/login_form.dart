@@ -9,7 +9,7 @@ class LoginForm extends StatelessWidget {
   final VoidCallback onLogin;
   final VoidCallback onNavigateToRegister;
 
-  LoginForm({
+  const LoginForm({
     super.key,
     required this.emailController,
     required this.passwordController,
