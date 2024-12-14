@@ -1,61 +1,82 @@
+import 'package:eventy/core/providers/service_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-
-class ServiceCard extends StatelessWidget {
-  final String title;
-  final String description;
-  //final String imagePath;
-
-  const ServiceCard({super.key, 
-    required this.title,
-    required this.description,
-    //required this.imagePath,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 4.0,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          /*ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(4.0),
-              topRight: Radius.circular(4.0),
-            ),
-            child: Image.asset(
-              imagePath,
-              height: 120.0,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),*/
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16.0,
+Widget serviceCard(ServiceProvider serviceProvider) {
+  return Consumer<ServiceProvider>(builder: (context, serviceProvider, _) {
+    return Expanded(
+      child: serviceProvider.loading
+          ? const CircularProgressIndicator()
+          : serviceProvider.services.isEmpty
+              ? const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.cases_rounded, size: 100, color: Colors.grey),
+                    SizedBox(height: 20),
+                    Text(
+                      "No services yet!",
+                      style: TextStyle(
+                          fontSize: 18.0, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                )
+              : GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12.0,
+                    crossAxisSpacing: 12.0,
+                    childAspectRatio: 3 / 4,
                   ),
+                  padding: const EdgeInsets.all(16.0),
+                  itemCount: serviceProvider.services.length,
+                  itemBuilder: (context, index) {
+                    final service = serviceProvider.services[index];
+
+                    return /*GestureDetector(
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              //FlashcardsHome(service: service),
+                        ),
+                      ),
+                      child:*/ Card(
+                        elevation: 6.0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16.0),
+                        ),
+                        color: Colors.grey,
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Text(
+                                service.label,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 16.0),
+                              Text(
+                                service.category,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 18.0,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      //),
+                    );
+                  },
                 ),
-                const SizedBox(height: 4.0),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 14.0,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
-  }
+  });
 }

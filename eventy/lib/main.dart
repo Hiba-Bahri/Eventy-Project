@@ -1,4 +1,5 @@
 import 'package:eventy/core/providers/auth_provider.dart';
+import 'package:eventy/core/providers/service_provider.dart';
 import 'package:eventy/features/authentication/screens/login.dart';
 import 'package:eventy/features/navigation_bar.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -11,6 +12,7 @@ void main() async{
   runApp(MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ServiceProvider()),
       ],
       child: const MyApp(),
     ),);
