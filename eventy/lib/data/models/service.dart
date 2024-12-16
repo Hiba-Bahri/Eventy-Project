@@ -2,29 +2,35 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Service {
   final String id;
-  final String label;
+  final String category;
   final String description;
-  final String fee;
+  final int experience;
+  final double fee;
   final bool isFeeNegotiable;
-  final String? category;
+  final String label;
+  final String userId;
 
   const Service({
     required this.id,
-    required this.label,
+    required this.category,
     required this.description,
+    required this.experience,
     required this.fee,
     required this.isFeeNegotiable,
-    this.category,
+    required this.label,
+    required this.userId,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'label': label,
+      'category': category,
       'description': description,
+      'experience': experience,
       'fee': fee,
       'isFeeNegotiable': isFeeNegotiable,
-      'category': category,
+      'label': label,
+      'userId': userId,
     };
   }
 
@@ -32,11 +38,13 @@ class Service {
     final data = snapshot.data()!;
     return Service(
       id: snapshot.id,
-      label: data['label'] ?? '',
-      description: data['description'] ?? '',
-      fee: data['fee'] ?? '',
-      isFeeNegotiable: data['is_fee_negotiable'] ?? false,
       category: data['category'],
+      description: data['description'] ?? '',
+      experience: data['experience'] ?? 0,
+      fee: data['fee'] ?? 0.0,
+      isFeeNegotiable: data['is_fee_negotiable'] ?? false,
+      label: data['label'] ?? '',
+      userId: data['user_id'] ?? '',
     );
   }
 }

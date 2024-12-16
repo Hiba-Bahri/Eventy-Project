@@ -17,6 +17,7 @@ class FirebaseServiceServices {
       print("----------------------------------------");
       return services;
     } catch (e) {
+      print('Failed to fetch service data: $e');
       showToast(message: 'Failed to fetch service data');
       return [];
     }

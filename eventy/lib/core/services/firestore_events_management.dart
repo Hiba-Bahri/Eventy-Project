@@ -7,7 +7,7 @@ class FirestoreEventService{
    Future<void> saveEvent({
     required String eventType,
     required DateTime eventDateTime,
-    required Map<String, String> serviceProviders,
+    required Map<String, dynamic> services,
   }) async {
     try {
       // Get the current logged-in user
@@ -22,15 +22,8 @@ class FirestoreEventService{
         'userId': currentUser.uid, // Explicitly store the user ID
         'eventType': eventType,
         'eventDateTime': Timestamp.fromDate(eventDateTime), // Convert DateTime to Timestamp
-        'serviceProviders': serviceProviders.map(
-          (service, provider) => MapEntry(
-            service, 
-            provider.split(' - ').first // Extract provider name
-          )
-        ),
-        'createdAt': FieldValue.serverTimestamp(),
+        'services': services
       };
-
       // Save to Firestore
       await _firestore.collection('events').add(eventData);
     } catch (e) {

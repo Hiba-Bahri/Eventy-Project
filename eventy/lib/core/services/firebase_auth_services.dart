@@ -74,7 +74,7 @@ class FirebaseAuthService {
         id: uid,
         email: email,
         username: username,
-        is_service_provider: 'false',
+        is_service_provider: false,
       );
 
       final userData = newUser.toJson();

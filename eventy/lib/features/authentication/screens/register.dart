@@ -82,7 +82,7 @@ class _RegisterState extends State<Register> {
       body: SafeArea(
         child: Column(
           children: [
-            Padding(
+            /*Padding(
               padding: const EdgeInsets.all(16.0),
               child: Align(
                 alignment: Alignment.topLeft,
@@ -91,7 +91,7 @@ class _RegisterState extends State<Register> {
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
-            ),
+            ),*/
             const SizedBox(height: 5),
             Lottie.network(
               'https://lottie.host/a1cfb1cc-982e-4bc1-9841-64f773f8d076/ucpvOzo0g8.json',

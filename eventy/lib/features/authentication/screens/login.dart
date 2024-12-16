@@ -1,5 +1,6 @@
 import 'package:eventy/features/authentication/widgets/login_form.dart';
 import 'package:eventy/features/home/screens/home.dart';
+import 'package:eventy/features/navigation_bar.dart';
 import 'package:eventy/shared/widgets/toast.dart';
 import 'package:eventy/features/authentication/screens/register.dart';
 import 'package:eventy/core/providers/auth_provider.dart';
@@ -47,7 +48,7 @@ class _LoginState extends State<Login> {
               Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const Home(),
+                              builder: (context) => const Navigation_Bar(),
                             ),
                           );
     } else {
@@ -76,7 +77,7 @@ class _LoginState extends State<Login> {
       body: SafeArea(
         child: Column(
           children: [
-            _buildBackButton(),
+            //_buildBackButton(),
             const SizedBox(height: 5),
             Lottie.network(
               'https://lottie.host/dee65a23-907f-4fdc-821b-702d69dbd451/pVbPqEZbdj.json',

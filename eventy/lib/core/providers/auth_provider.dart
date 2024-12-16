@@ -21,6 +21,7 @@ class AuthProvider with ChangeNotifier {
 
     if (_isLoggedIn) {
       _user = _authService.getCurrentUser();
+      print("CONNECTED USER: $_user");
     }
 
     notifyListeners();

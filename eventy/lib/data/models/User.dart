@@ -7,7 +7,7 @@ class User {
   final String? cin;
   final String? phone;
   final String? address;
-  final String? is_service_provider;
+  final bool? is_service_provider;
 
   const User({
     required this.id,
