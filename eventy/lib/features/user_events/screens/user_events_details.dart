@@ -1,10 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eventy/features/booking_management/screens/request_service.dart';
 import 'package:eventy/features/event_management/widgets/custom_dropdown_field.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart';
 
 class EventDetailsPage extends StatefulWidget {
   final String eventId;
@@ -175,7 +173,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
       itemBuilder: (context, index) {
         final serviceKey = services.keys.elementAt(index);
         final serviceName = serviceKey[0].toUpperCase() + serviceKey.substring(1);
-        final isSelected = false; 
+        var isSelected; //to be filled matansech ya yassine
 
         return GestureDetector(
           onLongPress: () => setState(() {

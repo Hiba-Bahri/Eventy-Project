@@ -7,11 +7,11 @@ class CustomDateTimePicker extends StatelessWidget {
   final String? errorText;
 
   const CustomDateTimePicker({
-    Key? key,
+    super.key,
     this.selectedDateTime,
     required this.onSelectDateTime,
     this.errorText,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +47,7 @@ class CustomDateTimePicker extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.calendar_month_rounded,
                       color: Colors.white,
                       size: 28,
@@ -59,14 +59,14 @@ class CustomDateTimePicker extends StatelessWidget {
                             ? 'Select Date & Time'
                             : DateFormat('EEE, MMM d, yyyy - hh:mm a')
                                 .format(selectedDateTime!),
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    Icon(
+                    const Icon(
                       Icons.edit_calendar_rounded,
                       color: Colors.white70,
                       size: 24,

@@ -8,13 +8,13 @@ class CustomDropdownField extends StatelessWidget {
   final String? errorText;
 
   const CustomDropdownField({
-    Key? key,
+    super.key,
     this.value,
     required this.items,
     required this.hintText,
     required this.onChanged,
     this.errorText,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -1,10 +1,7 @@
 import 'package:eventy/core/services/firestore_events_management.dart';
-import 'package:eventy/features/booking_management/screens/booking.dart';
 import 'package:eventy/features/event_management/widgets/custom_date_picker.dart';
 import 'package:eventy/features/event_management/widgets/custom_dropdown_field.dart';
 import 'package:flutter/material.dart';
-import 'package:eventy/shared/widgets/dropdown_field.dart';
-import 'package:intl/intl.dart';
 
 class ScheduleEvent extends StatefulWidget {
   const ScheduleEvent({super.key});
