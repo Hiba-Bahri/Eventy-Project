@@ -204,13 +204,39 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
       itemBuilder: (context, index) {
         final serviceKey = services.keys.elementAt(index);
         final serviceName = serviceKey[0].toUpperCase() + serviceKey.substring(1);
-        var isSelected; //to be filled matansech ya yassine
 
         return GestureDetector(
-          onLongPress: () => setState(() {
-            // Remove service on long press
-            services.remove(serviceKey);
-          }),
+          onLongPress: ()async {
+          try{
+            final eventRef = FirebaseFirestore.instance
+                .collection('events') // Replace with your collection
+                .doc(widget.eventId); // Replace with your document ID
+
+            // Create a local copy of the services
+            Map<String, dynamic> updatedServices = Map.from(services);
+
+            // Remove the service locally
+            updatedServices.remove(serviceKey);
+
+            // Update Firestore
+            await eventRef.update({'services': updatedServices});
+
+            // Update the local state
+            setState(() {
+              services.remove(serviceKey);
+            });
+
+            // Show success feedback
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Service "$serviceName" removed')),
+            );
+          }catch(e){
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to remove service: $e')),
+            );
+          }
+          }, 
+          // Update the services mapping in Firestore
           onTap: () {
             // Navigate to the service providers page
             Navigator.push(
@@ -228,10 +254,10 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
           child: Container(
             margin: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? Colors.green.shade50 : Colors.grey.shade100,
+              color: Colors.grey.shade100,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: isSelected ? Colors.green.shade200 : Colors.grey.shade300,
+                color:Colors.grey.shade300,
                 width: 1,
               ),
             ),
