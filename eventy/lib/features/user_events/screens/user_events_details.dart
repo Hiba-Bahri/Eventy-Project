@@ -23,6 +23,7 @@ class EventDetailsPage extends StatefulWidget {
 class _EventDetailsPageState extends State<EventDetailsPage> {
   late Map<String, dynamic> eventServices;
   late Map<String, dynamic> additionalServices;
+  FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
@@ -65,27 +66,57 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
             ),
             ElevatedButton(
               child: const Text('Add Service'),
-              onPressed: () {
-                // Validate and add service
-                if (serviceNameController.text.isNotEmpty) {
-                  String serviceKey = serviceNameController.text.toLowerCase();
-                  if (eventServices.containsKey(serviceKey)) {
+              onPressed: () async {
+              // Validate and add service
+              if (serviceNameController.text.isNotEmpty) {
+                String serviceKey = serviceNameController.text.toLowerCase();
+                if (eventServices.containsKey(serviceKey)) {
+                  Navigator.of(context).pop();
+                  // Show a message that the service already exists
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Service already exists in required services')),
+                  );
+                } else {
+                  // Update local state
+                  setState(() {
+                    additionalServices[serviceKey] = providerController.text.isNotEmpty
+                        ? providerController.text
+                        : null;
+                  });
+
+                  // Add the service to the database
+                  try {
+                    // Reference the event document
+                    DocumentReference eventRef = FirebaseFirestore.instance
+                        .collection('events')
+                        .doc(widget.eventId); 
+
+                    // Fetch current services mapping
+                    DocumentSnapshot eventSnapshot = await eventRef.get();
+                    Map<String, dynamic> services =
+                        (eventSnapshot.data() as Map<String, dynamic>)['services'] ?? {};
+
+                    // Update the services mapping
+                    services[serviceKey] = providerController.text.isNotEmpty
+                        ? providerController.text
+                        : null;
+
+                    // Update Firestore document
+                    await eventRef.update({'services': services});
+
                     Navigator.of(context).pop();
-                    // Show a message that the service already exists
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Service already exists in required services'))
+                      const SnackBar(content: Text('Service added successfully')),
                     );
-                  } else {
-                    setState(() {
-                      additionalServices[serviceKey] = 
-                          providerController.text.isNotEmpty 
-                            ? providerController.text 
-                            : null;
-                    });
+                  } catch (e) {
                     Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to add service: $e')),
+                    );
                   }
                 }
-              },
+              }
+            },
             ),
           ],
         );
@@ -132,7 +163,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
 
               // Required Services Section
               Text(
-                'Required Services',
+                'Suggested Services',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
@@ -175,7 +206,7 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
       itemBuilder: (context, index) {
         final serviceKey = services.keys.elementAt(index);
         final serviceName = serviceKey[0].toUpperCase() + serviceKey.substring(1);
-        final isSelected = false; 
+        const isSelected = false; 
 
         return GestureDetector(
           onLongPress: () => setState(() {
