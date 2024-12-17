@@ -18,73 +18,63 @@ class _Home extends State<Home> {
   @override
   void initState() {
     super.initState();
+    Provider.of<ServiceProvider>(context, listen: false).getServices();
   }
-
-  final List<Map<String, dynamic>> categories = [
-    {'icon': Icons.festival_rounded, 'title': 'Decorator'},
-    {'icon': Icons.music_note_rounded, 'title': 'Music'},
-    {'icon': Icons.emoji_food_beverage_rounded, 'title': 'Catering'},
-    {'icon': Icons.desk_rounded, 'title': 'Workspace'},
-  ];
-
 
   @override
   Widget build(BuildContext context) {
-          final serviceProvider =
-          Provider.of<ServiceProvider>(context, listen: false);
-    serviceProvider.getServices();
     return Scaffold(
-      body: Column(
-        children: [
-          const SizedBox(height: 20),
-          search_section(),
-          const SizedBox(height: 20.0),
-          Expanded( child:Column(
-        children: [
-          CarouselSlider(
-            options: CarouselOptions(
-              height: 270.0,
-              autoPlay: true,
-              autoPlayInterval: const Duration(seconds: 3),
-            ),
-            items: const [
-              BorderedImage(imagePath: 'assets/images/birthday.jpg'),
-              BorderedImage(imagePath: 'assets/images/concert.jpg'),
-              BorderedImage(imagePath: 'assets/images/conference.jpg'),
-              BorderedImage(imagePath: 'assets/images/wedding.jpg'),
-              BorderedImage(imagePath: 'assets/images/hike.jpg'),
-              BorderedImage(imagePath: 'assets/images/festival.jpg'),
-            ],
-          ),
-          const SizedBox(height: 16.0),
-          const Padding(
-            padding: EdgeInsets.all(16.0),
-            child: Text(
-              'Category',
-              style: TextStyle(
-                fontSize: 18.0,
-                fontWeight: FontWeight.bold,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 20),
+            search_section(),
+            const SizedBox(height: 20.0),
+            CarouselSlider(
+              options: CarouselOptions(
+                height: 270.0,
+                autoPlay: true,
+                autoPlayInterval: const Duration(seconds: 3),
               ),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 1.0, vertical: 0.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                CategoryCard(icon: Icons.festival_rounded, title: 'Decorator'),
-                CategoryCard(icon: Icons.music_note_rounded, title: 'Music'),
-                CategoryCard(
-                    icon: Icons.emoji_food_beverage_rounded, title: 'Catering'),
-                CategoryCard(icon: Icons.desk_rounded, title: 'Workspace'),
+              items: const [
+                BorderedImage(imagePath: 'assets/images/birthday.jpg'),
+                BorderedImage(imagePath: 'assets/images/concert.jpg'),
+                BorderedImage(imagePath: 'assets/images/conference.jpg'),
+                BorderedImage(imagePath: 'assets/images/wedding.jpg'),
+                BorderedImage(imagePath: 'assets/images/hike.jpg'),
+                BorderedImage(imagePath: 'assets/images/festival.jpg'),
               ],
             ),
-          ),
-          const SizedBox(height: 16.0),
-          serviceCard(serviceProvider)
-        ],
+            const SizedBox(height: 16.0),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'Category',
+                style: TextStyle(
+                  fontSize: 18.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 1.0, vertical: 0.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  CategoryCard(icon: Icons.festival_rounded, title: 'Decorator'),
+                  CategoryCard(icon: Icons.music_note_rounded, title: 'Music'),
+                  CategoryCard(
+                      icon: Icons.emoji_food_beverage_rounded, title: 'Catering'),
+                  CategoryCard(icon: Icons.desk_rounded, title: 'Workspace'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16.0),
+            const ServiceCardGrid(),
+          ],
+        ),
       ),
-      )])
     );
   }
 }
