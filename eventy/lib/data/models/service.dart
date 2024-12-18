@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Service {
   final String id;
+  final String state;
   final String category;
   final String description;
   final int experience;
@@ -12,6 +13,7 @@ class Service {
 
   const Service({
     required this.id,
+    required this.state,
     required this.category,
     required this.description,
     required this.experience,
@@ -25,6 +27,7 @@ class Service {
     return {
       'id': id,
       'category': category,
+      'state': state,
       'description': description,
       'experience': experience,
       'fee': fee,
@@ -39,6 +42,7 @@ class Service {
     return Service(
       id: snapshot.id,
       category: data['category'],
+      state: data['state'],
       description: data['description'] ?? '',
       experience: data['experience'] ?? 0,
       fee: data['fee'] ?? 0.0,

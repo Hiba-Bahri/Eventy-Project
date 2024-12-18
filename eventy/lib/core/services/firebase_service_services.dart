@@ -14,7 +14,6 @@ class FirebaseServiceServices {
         services.add(ServiceModel.Service.fromSnapshot(
             doc as DocumentSnapshot<Map<String, dynamic>>));
       }
-      print("----------------------------------------");
       return services;
     } catch (e) {
       print('Failed to fetch service data: $e');
