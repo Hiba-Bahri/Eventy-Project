@@ -1,4 +1,5 @@
 import 'package:eventy/core/providers/auth_provider.dart';
+import 'package:eventy/core/providers/chat_provider.dart';
 import 'package:eventy/core/providers/service_provider.dart';
 import 'package:eventy/features/authentication/screens/login.dart';
 import 'package:eventy/features/navigation_bar.dart';
@@ -13,6 +14,8 @@ void main() async{
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ServiceProvider()),
+        ChangeNotifierProvider(create: (_) => ChatProvider()),
+
       ],
       child: const MyApp(),
     ),);

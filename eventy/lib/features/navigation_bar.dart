@@ -1,6 +1,6 @@
 import 'package:eventy/core/providers/auth_provider.dart';
 import 'package:eventy/features/authentication/screens/login.dart';
-import 'package:eventy/features/chat.dart';
+import 'package:eventy/features/conversations_List.dart';
 import 'package:eventy/features/event_management/screens/schedule_event.dart';
 import 'package:eventy/features/home/screens/home.dart';
 import 'package:eventy/features/profile/screens/profile.dart';
@@ -24,7 +24,7 @@ class _Navigation_Bar extends State<Navigation_Bar> {
     const UserEvents(),
     const ScheduleEvent(),
     const UserServices(),
-    const Chat(),
+    const ConversationsList(),
   ];
 
   void _onItemTapped(int index) {

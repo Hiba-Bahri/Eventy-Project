@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class FilterDialog extends StatefulWidget {
+  const FilterDialog({super.key});
+
   @override
   _FilterDialogState createState() => _FilterDialogState();
 }
