@@ -1,8 +1,8 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:eventy/core/providers/service_provider.dart';
+import 'package:eventy/features/home/screens/search_page.dart';
 import 'package:eventy/features/home/widgets/bordered_image.dart';
 import 'package:eventy/features/home/widgets/category_card.dart';
-import 'package:eventy/features/home/widgets/search.dart';
 import 'package:eventy/features/home/widgets/service_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -29,7 +29,14 @@ class _Home extends State<Home> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 20),
-            search_section(),
+            IconButton(
+              iconSize: 20,
+              icon: Icon(Icons.search, color: Colors.grey[600]),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SearchPage()),
+              ),
+              color: const Color.fromARGB(255, 132, 97, 97),
+            ),
             const SizedBox(height: 20.0),
             CarouselSlider(
               options: CarouselOptions(
@@ -71,7 +78,26 @@ class _Home extends State<Home> {
               ),
             ),
             const SizedBox(height: 16.0),
-            const ServiceCardGrid(),
+            Consumer<ServiceProvider>(
+              builder: (context, serviceProvider, _) {
+                if (serviceProvider.loading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (serviceProvider.services.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      "No services yet.",
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  );
+                }
+
+                return ServiceCardGrid(
+                  services: serviceProvider.services,
+                );
+              },
+            ),
           ],
         ),
       ),

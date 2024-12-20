@@ -16,7 +16,7 @@
               ),
               child: const TextField(
                 decoration: InputDecoration(
-                  hintText: 'Search Furniture',
+                  hintText: 'Enter the name of service ',
                   border: InputBorder.none,
                 ),
               ),

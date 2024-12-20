@@ -1,4 +1,5 @@
 import 'package:eventy/core/services/firebase_service_services.dart';
+import 'package:eventy/data/models/Service.dart';
 //import 'package:eventy/data/models/service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,21 +7,71 @@ import 'package:flutter/material.dart';
 class ServiceProvider with ChangeNotifier {
   final servicesService = FirebaseServiceServices();
   bool loading = true;
-  List services = [];
+  List<Service> services = [];
+  List<Service> filteredServices = [];
   User? user;
 
   Future<void> getServices() async {
-
-    await Future.delayed(const Duration(seconds: 1));
-
     try {
       services = await servicesService.getAllServices();
-      print("------------------------------");
+      filteredServices = services;
       loading = false;
       notifyListeners();
     } catch (e) {
       throw Exception("Fetch failed: $e");
     }
+  }
+
+  void resetFilters() {
+  filteredServices = services;
+  notifyListeners();
+}
+
+
+  void filterServices(String query) {
+    if (query.isEmpty) {
+      filteredServices = services;
+    } else {
+      filteredServices = services
+          .where((service) =>
+              service.label.toLowerCase().contains(query.toLowerCase()))
+          .toList();
+    }
+    notifyListeners();
+  }
+
+  void filterServicesByFilters(
+    String? label,
+    String? state,
+    String? category,
+    bool? isFeeNegotiable,
+    double? feeRange,
+    int? experience,
+  ) {
+    print(
+        "---------------------- $label, $state, $category, $isFeeNegotiable, $feeRange, $experience");
+
+    filteredServices = services.where((service) {
+      final matchesLabel = (label == null) || (service.label == label);
+      final matchesState = (state == null) || (service.state == state);
+      final matchesCategory =
+          (category == null) || (service.category == category);
+      final matchesNegotiable = (isFeeNegotiable == null) ||
+          (service.isFeeNegotiable == isFeeNegotiable);
+      final matchesFee = (feeRange == null) || (service.fee <= feeRange);
+      final matchesExperience =
+          (experience == 0) || (service.experience >= experience!);
+      print("-------------------$matchesState");
+      return matchesLabel &&
+          matchesState &&
+          matchesCategory &&
+          matchesNegotiable &&
+          matchesFee &&
+          matchesExperience;
+    }).toList();
+    print(filteredServices);
+
+    notifyListeners();
   }
 
   /*Future<void> addService(Service service) async {

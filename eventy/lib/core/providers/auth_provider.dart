@@ -38,8 +38,10 @@ class AuthProvider with ChangeNotifier {
         await prefs.setBool('isLoggedIn', true);
 
         _isLoggedIn = true;
+        print(user);
         notifyListeners();
       }
+
       return user;
     } catch (e) {
       throw Exception("Login failed: $e");
@@ -65,21 +67,20 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-Future<bool> logout() async {
-  try {
-    await _authService.signOut();
+  Future<bool> logout() async {
+    try {
+      await _authService.signOut();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('isLoggedIn');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('isLoggedIn');
 
-    _user = null;
-    _isLoggedIn = false;
+      _user = null;
+      _isLoggedIn = false;
 
-    notifyListeners();
-    return true;
-  } catch (e) {
-    throw Exception("Logout failed: $e");
+      notifyListeners();
+      return true;
+    } catch (e) {
+      throw Exception("Logout failed: $e");
+    }
   }
-}
-
 }
