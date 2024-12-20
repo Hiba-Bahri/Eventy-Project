@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import 'package:eventy/features/booking_management/screens/request_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:eventy/core/providers/request_service_provider.dart'; // Update with your actual path
 
 class EventDetailsPage extends StatefulWidget {
   final String eventId;
@@ -19,54 +21,15 @@ class EventDetailsPage extends StatefulWidget {
 
 class _EventDetailsPageState extends State<EventDetailsPage> {
   late Map<String, dynamic> eventServices;
-  FirebaseFirestore firestore = FirebaseFirestore.instance;
-
-  List<Map<String, dynamic>> allRequests = [];
-  List<Map<String, dynamic>> filteredRequests = [];
-  String selectedStatus = 'All'; // Default dropdown filter value
 
   @override
   void initState() {
     super.initState();
     eventServices = widget.eventData['services'] ?? {};
-    fetchServiceRequests();
-  }
-
-  /// Fetch service requests for this event and user
-  Future<void> fetchServiceRequests() async {
-    try {
-      final querySnapshot = await firestore
-          .collection('requests')
-          .where('eventId', isEqualTo: widget.eventId)
-          .where('userId', isEqualTo: widget.eventData['userId'])
-          .get();
-
-      final requests = querySnapshot.docs.map((doc) {
-        return {
-          'id': doc.id,
-          ...doc.data(),
-        };
-      }).toList();
-
-      setState(() {
-        allRequests = requests;
-        filterRequests();
-      });
-    } catch (e) {
-      print('Error fetching service requests: $e');
-    }
-  }
-
-  /// Filter requests based on status
-  void filterRequests() {
-    setState(() {
-      if (selectedStatus == 'All') {
-        filteredRequests = allRequests;
-      } else {
-        filteredRequests = allRequests
-            .where((request) => request['status'] == selectedStatus)
-            .toList();
-      }
+    // Initialize the requests data using the provider
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final requestProvider = context.read<RequestServiceProvider>();
+      requestProvider.initRequestsListener(widget.eventId, widget.eventData['userId']);
     });
   }
 
@@ -111,76 +74,82 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),
-              // Filtering Dropdown
-              Text(
-                'Service Requests',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              DropdownButton<String>(
-                value: selectedStatus,
-                isExpanded: true,
-                items: ['All', 'Pending', 'Accepted', 'Rejected']
-                    .map((status) => DropdownMenuItem(
-                          value: status,
-                          child: Text(status),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedStatus = value!;
-                    filterRequests();
-                  });
+              // Service Requests Section with Provider Consumer
+              Consumer<RequestServiceProvider>(
+                builder: (context, provider, child) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Service Requests',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      DropdownButton<String>(
+                        value: provider.selectedStatus,
+                        isExpanded: true,
+                        items: ['All', 'Pending', 'Accepted', 'Rejected']
+                            .map((status) => DropdownMenuItem(
+                                  value: status,
+                                  child: Text(status),
+                                ))
+                            .toList(),
+                        onChanged: (value) {
+                          provider.setSelectedStatus(value!);
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      // Display Requests
+                      provider.filteredRequests.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No requests found.',
+                                style: TextStyle(fontSize: 16, color: Colors.grey),
+                              ),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: provider.filteredRequests.length,
+                              itemBuilder: (context, index) {
+                                final request = provider.filteredRequests[index];
+                                return Card(
+                                  elevation: 3,
+                                  margin: const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: ListTile(
+                                    leading: CircleAvatar(
+                                      backgroundColor: Colors.blue.shade50,
+                                      child: Icon(
+                                        Icons.business,
+                                        color: Colors.blue.shade600,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      request['serviceLabel'] ?? 'No Label',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Category: ${request['category']}'),
+                                        Text('Status: ${request['status']}'),
+                                      ],
+                                    ),
+                                    trailing: Icon(
+                                      Icons.circle,
+                                      color: _getStatusColor(request['status']),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ],
+                  );
                 },
               ),
-              const SizedBox(height: 8),
-              // Display Requests
-              filteredRequests.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No requests found.',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: filteredRequests.length,
-                      itemBuilder: (context, index) {
-                        final request = filteredRequests[index];
-                        return Card(
-                          elevation: 3,
-                          margin: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.blue.shade50,
-                              child: Icon(
-                                Icons.business,
-                                color: Colors.blue.shade600,
-                              ),
-                            ),
-                            title: Text(
-                              request['serviceLabel'] ?? 'No Label',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Category: ${request['category']}'),
-                                Text('Status: ${request['status']}'),
-                              ],
-                            ),
-                            trailing: Icon(
-                              Icons.circle,
-                              color: _getStatusColor(request['status']),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
             ],
           ),
         ),
@@ -194,7 +163,11 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
                 userId: widget.eventData['userId'],
               ),
             ),
-          );
+          ).then((_) {
+            // Refresh requests when returning from RequestService page
+            final requestProvider = context.read<RequestServiceProvider>();
+            requestProvider.initRequestsListener(widget.eventId, widget.eventData['userId']);
+          });
         },
         icon: const Icon(Icons.add_circle_outline),
         label: const Text('Request Service'),
@@ -208,7 +181,6 @@ class _EventDetailsPageState extends State<EventDetailsPage> {
     );
   }
 
-  /// Get color for status
   Color _getStatusColor(String status) {
     switch (status) {
       case 'Pending':
