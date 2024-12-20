@@ -166,6 +166,7 @@ Future<void> saveServiceToDB({
   required bool isFeeNegotiable,
   required String label,
   required int experience,
+  required String state,
 }) async {
   try {
     final serviceData = {
@@ -173,6 +174,7 @@ Future<void> saveServiceToDB({
       'description': description,
       'fee': fee,
       'experience': experience,
+      'state': state,
       'is_fee_negotiable': isFeeNegotiable,
       'label': label,
       'userId': userId,
@@ -192,6 +194,7 @@ Future<void> saveServiceToDB({
   final TextEditingController labelController = TextEditingController();
   bool isFeeNegotiable = false;
   String? selectedCategory;
+  String? selectedState;
 
 
   await showDialog(
@@ -235,6 +238,25 @@ Future<void> saveServiceToDB({
                 },
               ),
               const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: selectedState  ,
+                decoration: const InputDecoration(
+                  labelText: 'State',
+                  border: OutlineInputBorder(),
+                ),
+                items: [
+                  'Ariana','Beja','Ben Arous', 'Bizerte', 'Gabes', 'Gafsa', 'Jendouba', 'Kairaouan', 'Kasserine', 'Kebili', 'Le Keef', 'Mahdia', 'La Manouba', 'Medenine', 'Monastir', 'Nabeul', 'Sfax', 'Sidi Bouzid', 'Siliana', 'Sousse', 'Tataouine', 'Tozeur', 'Tunis', 'Zaghouan'
+                ]
+                    .map((state) => DropdownMenuItem<String>(
+                          value: state,
+                          child: Text(state),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  selectedState = value;
+                },
+                ),
+                  const SizedBox(height: 16),
                   TextField(
                     controller: experienceController,
                     decoration: const InputDecoration(labelText: 'Experience (years)'),
@@ -285,7 +307,7 @@ Future<void> saveServiceToDB({
                 showToast(message: 'Please fill all fields');
                 return;
               }
-              await saveServiceToDB(userId: userData?['id'], category: selectedCategory!, description: descriptionController.text, fee: double.tryParse(feeController.text) ?? 0.0, isFeeNegotiable: isFeeNegotiable, label: labelController.text, experience: int.tryParse(experienceController.text)?? 0);
+              await saveServiceToDB(userId: userData?['id'], category: selectedCategory!, description: descriptionController.text, fee: double.tryParse(feeController.text) ?? 0.0, isFeeNegotiable: isFeeNegotiable, label: labelController.text, experience: int.tryParse(experienceController.text)?? 0, state: selectedState ?? '');
               // For now, just display a toast
               showToast(
                 message: 'Service added successfully',
