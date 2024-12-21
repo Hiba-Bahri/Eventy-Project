@@ -8,7 +8,7 @@ class ChatProvider extends ChangeNotifier {
 
   String? currentUserId;
 
-  /// Fetch chat rooms where the user is a participant.
+  // Fetch chat rooms where the user is a participant.
   Stream<QuerySnapshot> getChatRooms() {
     currentUserId = _auth.currentUser!.uid;
     print("------------------------------------- $currentUserId");
@@ -19,7 +19,7 @@ class ChatProvider extends ChangeNotifier {
         .snapshots();
   }
 
-  /// Fetch messages for a specific chat room.
+  // Fetch messages for a specific chat room.
   Stream<QuerySnapshot> getMessages(String chatRoomId) {
     return _firestore
         .collection('chatRooms')
@@ -29,7 +29,7 @@ class ChatProvider extends ChangeNotifier {
         .snapshots();
   }
 
-  /// Send a message to a specific chat room.
+  // Send a message to a specific chat room.
   Future<void> sendMessage({
     required String chatRoomId,
     required String message,
@@ -55,10 +55,50 @@ class ChatProvider extends ChangeNotifier {
     }, SetOptions(merge: true));
   }
 
-  /// Generate a chat room ID based on user IDs.
+  // Generate a chat room ID based on user IDs.
   String generateChatRoomId(String user1, String user2) {
     return user1.hashCode <= user2.hashCode
         ? '${user1}_$user2'
         : '${user2}_$user1';
+  }
+
+  // Initiates a chat room between two users and sends the first message.
+  Future<void> initiateChatRoomAndSendMessage({
+    required String user1Id,
+    required String user2Id,
+  }) async {
+    const String message = "Hello There!";
+
+    final chatRoomId = generateChatRoomId(user1Id, user2Id);
+
+    final timestamp = FieldValue.serverTimestamp();
+
+    // Check if the chat room already exists
+    final chatRoomRef = _firestore.collection('chatRooms').doc(chatRoomId);
+
+    final chatRoomSnapshot = await chatRoomRef.get();
+
+    // else :
+    if (!chatRoomSnapshot.exists) {
+      await chatRoomRef.set({
+        'users': [user1Id, user2Id],
+        'lastMessage': message,
+        'timestamp': timestamp,
+      });
+    }
+
+    // Send the first message in the chat room
+    await chatRoomRef.collection('messages').add({
+      'text': message,
+      'senderId': user1Id,
+      'receiverId': user2Id,
+      'timestamp': timestamp,
+    });
+
+    // Update the last message and timestamp in the chat room metadata
+    await chatRoomRef.set({
+      'lastMessage': message,
+      'timestamp': timestamp,
+    }, SetOptions(merge: true));
   }
 }
