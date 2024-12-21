@@ -8,12 +8,12 @@ class ServiceCard extends StatelessWidget {
   final VoidCallback onRequest;
 
   const ServiceCard({
-    Key? key,
+    super.key,
     required this.service,
     required this.isRequested,
     required this.isCategoryLocked,
     required this.onRequest,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,9 +27,9 @@ class ServiceCard extends StatelessWidget {
         contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
           backgroundColor: const Color(0xFF3498db).withOpacity(0.1),
-          child: Icon(
+          child: const Icon(
             Icons.business_center,
-            color: const Color(0xFF3498db),
+            color: Color(0xFF3498db),
           ),
         ),
         title: Text(

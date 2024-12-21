@@ -1,6 +1,5 @@
 import 'package:eventy/core/providers/request_service_provider.dart';
 import 'package:eventy/features/booking_management/screens/widgets/serviceCard.dart';
-import 'package:eventy/main.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -9,10 +8,10 @@ class RequestService extends StatefulWidget {
   final String userId;
 
   const RequestService({
-    Key? key,
+    super.key,
     required this.eventId,
     required this.userId,
-  }) : super(key: key);
+  });
 
   @override
   _RequestServiceState createState() => _RequestServiceState();
@@ -40,6 +39,7 @@ class _RequestServiceState extends State<RequestService> {
   void initState() {
     super.initState();
     context.read<RequestServiceProvider>().init(widget.userId);
+    context.read<RequestServiceProvider>().initNotificationsListener(widget.userId);
   }
 
   @override
@@ -80,7 +80,7 @@ class _RequestServiceState extends State<RequestService> {
                               value: category,
                               child: Text(category),
                             );
-                          }).toList(),
+                          }),
                         ],
                         onChanged: (value) {
                           provider.filterServices(value);
@@ -115,32 +115,42 @@ class _RequestServiceState extends State<RequestService> {
                             isRequested: isRequested,
                             isCategoryLocked: isCategoryLocked,
                             onRequest: () async {
-                              try {
-                                await provider.sendRequest(
-                                  eventId: widget.eventId,
-                                  userId: widget.userId,
-                                  service: service,
-                                );
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Service request sent successfully!'),
-                                      backgroundColor: Colors.green,
-                                    ),
+                                try {
+                                  // Send the service request and get the requestId
+                                  final requestId = await provider.sendRequest(
+                                    eventId: widget.eventId,
+                                    userId: widget.userId,
+                                    service: service,
                                   );
-                                }
-                              } catch (e) {
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('Error: ${e.toString()}'),
-                                      backgroundColor: Colors.red,
-                                    ),
+
+                                  // Send the notification with the requestId
+                                  await provider.sendNotification(
+                                    receiverId: service['userId'],
+                                    message: 'New service request for ${service['label']}',
+                                    requestId: requestId, // Pass the requestId here
                                   );
+
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Service request sent successfully!'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error: ${e.toString()}'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                    print('Error sending request: $e');
+                                  }
                                 }
-                              }
-                            },
-                          );
+                              },
+                          );  
                         },
                       ),
               ),

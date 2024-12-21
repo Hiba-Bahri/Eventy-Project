@@ -1,6 +1,7 @@
 import 'package:eventy/core/providers/auth_provider.dart';
 import 'package:eventy/core/providers/chat_provider.dart';
 import 'package:eventy/core/providers/event_details_provider.dart';
+import 'package:eventy/core/providers/notification_provider.dart';
 import 'package:eventy/core/providers/request_service_provider.dart';
 import 'package:eventy/core/providers/service_provider.dart';
 import 'package:eventy/core/services/event_service.dart';
@@ -12,8 +13,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 void main() async{
-  final mockEventId = 'mockEventId';
-  final mockUserId = 'mockUserId';
+  const mockEventId = 'mockEventId';
+  const mockUserId = 'mockUserId';
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   runApp(MultiProvider(
@@ -23,6 +24,7 @@ void main() async{
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => EventDetailsProvider(eventService: EventService(), eventId: mockEventId, userId: mockUserId)),
         ChangeNotifierProvider(create: (_) => RequestServiceProvider(RequestServiceRepository())),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: const MyApp(),
     ),);

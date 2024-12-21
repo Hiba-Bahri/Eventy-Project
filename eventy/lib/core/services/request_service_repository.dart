@@ -44,23 +44,24 @@ class RequestServiceRepository {
     }).toList();
   }
 
-  Future<void> sendRequest({
-    required String eventId,
-    required String userId,
-    required String serviceId,
-    required String serviceLabel,
-    required String category,
-  }) async {
-    await _firestore.collection('requests').add({
-      'eventId': eventId,
-      'userId': userId,
-      'serviceId': serviceId,
-      'serviceLabel': serviceLabel,
-      'category': category,
-      'status': 'Pending',
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-  }
+  Future<String> sendRequest({
+  required String eventId,
+  required String userId,
+  required String serviceId,
+  required String serviceLabel,
+  required String category,
+}) async {
+  final requestRef = await _firestore.collection('requests').add({
+    'eventId': eventId,
+    'userId': userId,
+    'serviceId': serviceId,
+    'serviceLabel': serviceLabel,
+    'category': category,
+    'status': 'Pending',
+    'timestamp': FieldValue.serverTimestamp(),
+  });
+  return requestRef.id; // Return the generated request ID
+}
 
   Stream<List<Map<String, dynamic>>> getServiceRequestsStream(String eventId, String userId) {
     // Implement the logic to fetch and stream service requests
@@ -71,7 +72,41 @@ class RequestServiceRepository {
         .where('userId', isEqualTo: userId)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => doc.data() as Map<String, dynamic>)
+            .map((doc) => doc.data())
             .toList());
+  }
+    Future<void> saveNotification({
+    required String senderId,
+    required String receiverId,
+    required String message,
+    required String requestId,
+  }) async {
+    try {
+      await _firestore.collection('notifications').add({
+        'senderId': senderId,
+        'receiverId': receiverId,
+        'message': message,
+        'requestId': requestId, // Save the requestId
+        'timestamp': FieldValue.serverTimestamp(),
+        'read': false, // Initially set to unread
+      });
+    } catch (e) {
+      throw Exception('Error saving notification: $e');
+    }
+  }
+  //GET Request By ID
+  Future<Map<String, dynamic>?> getRequestById(String requestId) async {
+    final DocumentSnapshot doc = await _firestore.collection('requests').doc(requestId).get();
+    if (!doc.exists) return null;
+    return {
+      'id': doc.id,
+      ...doc.data() as Map<String, dynamic>,
+    };
+  }
+  //Respond to Request
+  Future<void> respondToRequest(String requestId, String status) async {
+    await _firestore.collection('requests').doc(requestId).update({
+      'status': status,
+    });
   }
 }

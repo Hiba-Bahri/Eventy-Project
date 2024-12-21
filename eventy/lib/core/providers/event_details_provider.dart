@@ -6,11 +6,10 @@ class EventDetailsProvider extends ChangeNotifier{
   final String eventId;
   final String userId;
 
-  List<Map<String, dynamic>> _allRequests = [];
-  List<Map<String, dynamic>> _filteredRequests = [];
-  String _selectedStatus = 'All';
+  final List<Map<String, dynamic>> _allRequests = [];
+  final List<Map<String, dynamic>> _filteredRequests = [];
+  final String _selectedStatus = 'All';
 
-  EventDetailsProvider({required this.eventService, required this.eventId, required this.userId}) {
-  }
+  EventDetailsProvider({required this.eventService, required this.eventId, required this.userId});
 
 }
