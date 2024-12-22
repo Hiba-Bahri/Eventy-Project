@@ -1,9 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eventy/core/services/firebase_auth_services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:eventy/data/models/User.dart' as UserModel;
 
 class ChatProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuthService _authService = FirebaseAuthService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   String? currentUserId;
@@ -11,7 +14,7 @@ class ChatProvider extends ChangeNotifier {
   // Fetch chat rooms where the user is a participant.
   Stream<QuerySnapshot> getChatRooms() {
     currentUserId = _auth.currentUser!.uid;
-    print("------------------------------------- $currentUserId");
+    print("---------------current user ---------------------- $currentUserId");
     return _firestore
         .collection('chatRooms')
         .where('users', arrayContains: currentUserId)
@@ -62,43 +65,52 @@ class ChatProvider extends ChangeNotifier {
         : '${user2}_$user1';
   }
 
-  // Initiates a chat room between two users and sends the first message.
-  Future<void> initiateChatRoomAndSendMessage({
-    required String user1Id,
-    required String user2Id,
+  Future<List<String>?> initiateChatRoomAndSendMessage({
+    required String user1Id, // the authenticated user id
+    required String user2Id, // the other person in the chat
   }) async {
     const String message = "Hello There!";
 
     final chatRoomId = generateChatRoomId(user1Id, user2Id);
-
     final timestamp = FieldValue.serverTimestamp();
 
-    // Check if the chat room already exists
     final chatRoomRef = _firestore.collection('chatRooms').doc(chatRoomId);
 
-    final chatRoomSnapshot = await chatRoomRef.get();
+    try {
+      // Check if the chat room already exists
+      final chatRoomSnapshot = await chatRoomRef.get();
+      print("-------------------------------$chatRoomRef");
 
-    // else :
-    if (!chatRoomSnapshot.exists) {
-      await chatRoomRef.set({
-        'users': [user1Id, user2Id],
-        'lastMessage': message,
+      // else :
+      if (!chatRoomSnapshot.exists) {
+        await chatRoomRef.set({
+          'users': [user1Id, user2Id],
+          'lastMessage': message,
+          'timestamp': timestamp,
+        });
+        print("Chat room created with ID: $chatRoomId");
+      } else {
+        print("Chat room already exists with ID: $chatRoomId");
+      }
+
+      await chatRoomRef.collection('messages').add({
+        'text': message,
+        'senderId': user1Id,
+        'receiverId': user2Id,
         'timestamp': timestamp,
       });
+
+      await chatRoomRef.set({
+        'lastMessage': message,
+        'timestamp': timestamp,
+      }, SetOptions(merge: true));
+
+      UserModel.User? user = await _authService.getUserData(user2Id);
+
+      return [chatRoomId, user2Id, user!.username];
+    } catch (e) {
+      print("Error accessing or updating chat room: $e");
+      return null;
     }
-
-    // Send the first message in the chat room
-    await chatRoomRef.collection('messages').add({
-      'text': message,
-      'senderId': user1Id,
-      'receiverId': user2Id,
-      'timestamp': timestamp,
-    });
-
-    // Update the last message and timestamp in the chat room metadata
-    await chatRoomRef.set({
-      'lastMessage': message,
-      'timestamp': timestamp,
-    }, SetOptions(merge: true));
   }
 }

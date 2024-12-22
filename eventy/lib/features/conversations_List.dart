@@ -36,7 +36,7 @@ class ConversationsList extends StatelessWidget {
                   .firstWhere((user) => user != chatService.currentUserId);
 
               return FutureBuilder(
-                future: authService.getUserData(otherUserId), // Now uses caching
+                future: authService.getUserData(otherUserId),
                 builder: (context, AsyncSnapshot snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const ListTile(
@@ -61,24 +61,51 @@ class ConversationsList extends StatelessWidget {
 
                   final user = snapshot.data;
 
-                  return ListTile(
-                    title: Text('Chat with ${user.username}'), // Display the user’s name
-                    subtitle: Text(chatRoom['lastMessage']),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChatScreen(
-                            chatRoomId: chatRoom.id,
-                            receiverId: otherUserId,
-                          ),
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+                    child: Material(
+                      elevation: 2,
+                      shadowColor: Colors.black26,
+                      borderRadius: BorderRadius.circular(10),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: 
+                  CircleAvatar(
+                    child: Text(
+                      user.username?.substring(0, 1) ?? '',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                        title: Text(
+                          'Chat with ${user.username}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                      );
-                    },
+                        subtitle: Text(
+                          chatRoom['lastMessage'],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        tileColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatScreen(
+                                chatRoomId: chatRoom.id,
+                                receiverId: otherUserId,
+                                senderUsername: user.username,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   );
                 },
               );
-
             },
           );
         },

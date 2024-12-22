@@ -11,13 +11,30 @@ class AuthProvider with ChangeNotifier {
   bool _isLoggedIn = false;
 
   AuthProvider() {
-    _loadUserFromPrefs();
+    loadUserFromPrefs();
   }
 
   User? get user => _user;
+
   bool get isLoggedIn => _isLoggedIn;
   UserModel.User? get fetchedUser => _fetchedUser;
-  final Map<String, UserModel.User> _userCache = {}; 
+
+  Future<User?> getCurrentUser() async {
+    try {
+      final User? user = await _authService.getCurrentUser();
+      if (user != null) {
+        _user = user;
+
+        notifyListeners();
+      }
+
+      return user;
+    } catch (e) {
+      throw Exception("Fetch failed: $e");
+    }
+  }
+
+  final Map<String, UserModel.User> _userCache = {};
 
   Future<UserModel.User?> getUserData(String uid) async {
     if (_userCache.containsKey(uid)) {
@@ -36,7 +53,7 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> _loadUserFromPrefs() async {
+  Future<void> loadUserFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
