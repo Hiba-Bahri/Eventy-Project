@@ -171,169 +171,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
-Future<void> saveServiceToDB({
-  required String userId,
-  required String category,
-  required String description,
-  required double fee,
-  required bool isFeeNegotiable,
-  required String label,
-  required int experience,
-  required String state,
-}) async {
-  try {
-    final serviceData = {
-      'category': category,
-      'description': description,
-      'fee': fee,
-      'experience': experience,
-      'state': state,
-      'is_fee_negotiable': isFeeNegotiable,
-      'label': label,
-      'userId': userId,
-    };
-
-    await FirebaseFirestore.instance.collection('services').add(serviceData);
-    showToast(message: 'Service added successfully!');
-  } catch (e) {
-    showToast(message: 'Failed to add service: $e');
-  }
-}
-
-  Future<void> showAddServiceDialog(BuildContext context) async {
-  final TextEditingController experienceController = TextEditingController();
-  final TextEditingController descriptionController = TextEditingController();
-  final TextEditingController feeController = TextEditingController();
-  final TextEditingController labelController = TextEditingController();
-  bool isFeeNegotiable = false;
-  String? selectedCategory;
-  String? selectedState;
 
 
-  await showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Add Service'),
-        content: StatefulBuilder(
-          builder: (context, setState) {
-            return SingleChildScrollView(
-              child: Column(
-                children: [
-                  DropdownButtonFormField<String>(
-                value: selectedCategory,
-                decoration: const InputDecoration(
-                  labelText: 'Category',
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  'Catering',
-                  'Audio',
-                  'Visual',
-                  'Security',
-                  'Photography',
-                  'Cake',
-                  'Decorations',
-                  'Entertainment',
-                  'Transportation',
-                  'Stage Setup',
-                  'Lighting',
-                  'Food Stalls',
-                  'First Aid',
-                ]
-                    .map((category) => DropdownMenuItem<String>(
-                          value: category,
-                          child: Text(category),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  selectedCategory = value;
-                },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: selectedState  ,
-                decoration: const InputDecoration(
-                  labelText: 'State',
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  'Ariana','Beja','Ben Arous', 'Bizerte', 'Gabes', 'Gafsa', 'Jendouba', 'Kairaouan', 'Kasserine', 'Kebili', 'Le Keef', 'Mahdia', 'La Manouba', 'Medenine', 'Monastir', 'Nabeul', 'Sfax', 'Sidi Bouzid', 'Siliana', 'Sousse', 'Tataouine', 'Tozeur', 'Tunis', 'Zaghouan'
-                ]
-                    .map((state) => DropdownMenuItem<String>(
-                          value: state,
-                          child: Text(state),
-                        ))
-                    .toList(),
-                onChanged: (value) {
-                  selectedState = value;
-                },
-                ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: experienceController,
-                    decoration: const InputDecoration(labelText: 'Experience (years)'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: const InputDecoration(labelText: 'Description'),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: labelController,
-                    decoration: const InputDecoration(labelText: 'Label'),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: feeController,
-                    decoration: const InputDecoration(labelText: 'Fee'),
-                    keyboardType: TextInputType.number,
-                  ),
-                  const SizedBox(height: 16),
-                  CheckboxListTile(
-                    title: const Text('Is Fee Negotiable?'),
-                    value: isFeeNegotiable,
-                    onChanged: (value) {
-                      setState(() {
-                        isFeeNegotiable = value ?? false;
-                      });
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (selectedCategory == null ||
-                  descriptionController.text.isEmpty ||
-                  feeController.text.isEmpty ||
-                  labelController.text.isEmpty) {
-                showToast(message: 'Please fill all fields');
-                return;
-              }
-              await saveServiceToDB(userId: userData?['id'], category: selectedCategory!, description: descriptionController.text, fee: double.tryParse(feeController.text) ?? 0.0, isFeeNegotiable: isFeeNegotiable, label: labelController.text, experience: int.tryParse(experienceController.text)?? 0, state: selectedState ?? '');
-              // For now, just display a toast
-              showToast(
-                message: 'Service added successfully',
-              );
-              Navigator.of(context).pop();
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      );
-    },
-  );
-}
+  
 
 
   @override
@@ -425,7 +265,7 @@ Future<void> saveServiceToDB({
                         onConfirm: () => toggleServiceProviderStatus(newStatus),
                       );
                     },
-                    onAddService: () => showAddServiceDialog(context),
+                    onAddService: () => {},
                   ),
                   
                   if (isExpanded) ...[
@@ -585,17 +425,6 @@ class UserProfileActions extends StatelessWidget {
               ? 'Cancel Becoming Service Provider'
               : 'Become Service Provider'),
         ),
-        if (isServiceProvider)
-          const SizedBox(height: 10),
-        if (isServiceProvider)
-          ElevatedButton(
-            onPressed: onAddService,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blue,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Add Service'),
-          ),
       ],
     );
   }

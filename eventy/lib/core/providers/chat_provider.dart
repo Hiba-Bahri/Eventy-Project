@@ -48,6 +48,7 @@ class ChatProvider extends ChangeNotifier {
       'senderId': currentUserId,
       'receiverId': receiverId,
       'timestamp': timestamp,
+      'readBy': null,
     });
 
     // Update chat room metadata
@@ -57,6 +58,40 @@ class ChatProvider extends ChangeNotifier {
       'timestamp': timestamp,
     }, SetOptions(merge: true));
   }
+
+  Stream<int> getUnreadMessageCount(String chatRoomId) {
+    return _firestore
+        .collection('chatRooms')
+        .doc(chatRoomId)
+        .collection('messages')
+        .where('readBy', isNull: true)
+        .where('receiverId', isEqualTo: currentUserId)
+        .snapshots()
+        .map((querySnapshot) => querySnapshot.docs.length);
+  }
+
+Future<void> markMessagesAsRead(String chatRoomId) async {
+  final unreadMessages = await _firestore
+      .collection('chatRooms')
+      .doc(chatRoomId)
+      .collection('messages')
+      .where('readBy', isNull: true)
+      .where('receiverId', isEqualTo: currentUserId)
+      .get();
+
+  for (var message in unreadMessages.docs) {
+    final readBy = message['readBy'];
+
+    if (readBy == null || !(readBy as List).contains(currentUserId)) {
+      await message.reference.update({
+        'readBy': FieldValue.arrayUnion([currentUserId]),
+      });
+    }
+  }
+
+  notifyListeners();
+}
+
 
   // Generate a chat room ID based on user IDs.
   String generateChatRoomId(String user1, String user2) {
@@ -93,17 +128,8 @@ class ChatProvider extends ChangeNotifier {
         print("Chat room already exists with ID: $chatRoomId");
       }
 
-      await chatRoomRef.collection('messages').add({
-        'text': message,
-        'senderId': user1Id,
-        'receiverId': user2Id,
-        'timestamp': timestamp,
-      });
-
-      await chatRoomRef.set({
-        'lastMessage': message,
-        'timestamp': timestamp,
-      }, SetOptions(merge: true));
+      await sendMessage(
+          chatRoomId: chatRoomId, message: message, receiverId: user2Id);
 
       UserModel.User? user = await _authService.getUserData(user2Id);
 
@@ -113,4 +139,52 @@ class ChatProvider extends ChangeNotifier {
       return null;
     }
   }
+
+  Stream<int> getTotalUnreadMessagesStream() {
+    return _firestore
+        .collection('chatRooms')
+        .where('users', arrayContains: currentUserId)
+        .snapshots()
+        .asyncMap((snapshot) async {
+      int totalUnread = 0;
+      for (var chatRoom in snapshot.docs) {
+        final chatRoomId = chatRoom.id;
+        final unreadMessagesSnapshot = await _firestore
+            .collection('chatRooms')
+            .doc(chatRoomId)
+            .collection('messages')
+            .where('readBy', isNull: true)
+            .where('receiverId', isEqualTo: currentUserId)
+            .get();
+
+        totalUnread += unreadMessagesSnapshot.docs.length;
+      }
+      return totalUnread;
+    });
+  }
+
+  Future<int> getTotalUnreadMessages() async {
+  int totalUnread = 0;
+  final chatRoomsSnapshot = await _firestore
+      .collection('chatRooms')
+      .where('users', arrayContains: currentUserId)
+      .get();
+
+  for (var chatRoom in chatRoomsSnapshot.docs) {
+    final chatRoomId = chatRoom.id;
+    final unreadMessagesSnapshot = await _firestore
+        .collection('chatRooms')
+        .doc(chatRoomId)
+        .collection('messages')
+        .where('readBy', isNull: true)
+        .where('receiverId', isEqualTo: currentUserId)
+        .get();
+
+    totalUnread += unreadMessagesSnapshot.docs.length;
+  }
+
+  return totalUnread;
+}
+
+
 }
