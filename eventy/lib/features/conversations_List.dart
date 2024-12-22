@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eventy/core/providers/auth_provider.dart';
 import 'package:eventy/core/providers/chat_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,7 @@ class ConversationsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final chatService = Provider.of<ChatProvider>(context);
+    final authService = Provider.of<AuthProvider>(context);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Chats')),
@@ -30,19 +32,75 @@ class ConversationsList extends StatelessWidget {
             itemCount: chatRooms.length,
             itemBuilder: (context, index) {
               final chatRoom = chatRooms[index];
-              final otherUser = (chatRoom['users'] as List)
+              final otherUserId = (chatRoom['users'] as List)
                   .firstWhere((user) => user != chatService.currentUserId);
 
-              return ListTile(
-                title: Text('Chat with $otherUser'),
-                subtitle: Text(chatRoom['lastMessage']),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChatScreen(
-                        chatRoomId: chatRoom.id,
-                        receiverId: otherUser,
+              return FutureBuilder(
+                future: authService.getUserData(otherUserId),
+                builder: (context, AsyncSnapshot snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const ListTile(
+                      title: Text('Loading...'),
+                      subtitle: Text('Fetching user details...'),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return const ListTile(
+                      title: Text('Error'),
+                      subtitle: Text('Could not fetch user details.'),
+                    );
+                  }
+
+                  if (!snapshot.hasData || snapshot.data == null) {
+                    return const ListTile(
+                      title: Text('Unknown User'),
+                      subtitle: Text('No user details available.'),
+                    );
+                  }
+
+                  final user = snapshot.data;
+
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 10.0),
+                    child: Material(
+                      elevation: 2,
+                      shadowColor: Colors.black26,
+                      borderRadius: BorderRadius.circular(10),
+                      child: ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: 
+                  CircleAvatar(
+                    child: Text(
+                      user.username?.substring(0, 1) ?? '',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                        title: Text(
+                          'Chat with ${user.username}',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          chatRoom['lastMessage'],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        tileColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatScreen(
+                                chatRoomId: chatRoom.id,
+                                receiverId: otherUserId,
+                                senderUsername: user.username,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   );
