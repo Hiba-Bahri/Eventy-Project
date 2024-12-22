@@ -1,5 +1,5 @@
 import 'package:eventy/core/providers/chat_provider.dart';
-import 'package:eventy/features/chat_screen.dart';
+import 'package:eventy/features/chat/screens/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

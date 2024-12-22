@@ -48,6 +48,7 @@ class ChatProvider extends ChangeNotifier {
       'senderId': currentUserId,
       'receiverId': receiverId,
       'timestamp': timestamp,
+      'readBy': null,
     });
 
     // Update chat room metadata
@@ -56,6 +57,39 @@ class ChatProvider extends ChangeNotifier {
       'lastMessage': message,
       'timestamp': timestamp,
     }, SetOptions(merge: true));
+  }
+
+  Stream<int> getUnreadMessageCount(String chatRoomId) {
+    return _firestore
+        .collection('chatRooms')
+        .doc(chatRoomId)
+        .collection('messages')
+        .where('readBy', isNull: true)
+        .where('receiverId', isEqualTo: currentUserId)
+        .snapshots()
+        .map((querySnapshot) => querySnapshot.docs.length);
+  }
+
+  Future<void> markMessagesAsRead(String chatRoomId) async {
+    final unreadMessages = await _firestore
+        .collection('chatRooms')
+        .doc(chatRoomId)
+        .collection('messages')
+        .where('readBy', isNull: true)
+        .get();
+
+    for (var message in unreadMessages.docs) {
+      final readBy = message['readBy'];
+
+      if (readBy == null || !(readBy as List).contains(currentUserId)) {
+        if (message['senderId'] == currentUserId) {
+          return;
+        }
+        await message.reference.update({
+          'readBy': FieldValue.arrayUnion([currentUserId]),
+        });
+      }
+    }
   }
 
   // Generate a chat room ID based on user IDs.
@@ -93,17 +127,8 @@ class ChatProvider extends ChangeNotifier {
         print("Chat room already exists with ID: $chatRoomId");
       }
 
-      await chatRoomRef.collection('messages').add({
-        'text': message,
-        'senderId': user1Id,
-        'receiverId': user2Id,
-        'timestamp': timestamp,
-      });
-
-      await chatRoomRef.set({
-        'lastMessage': message,
-        'timestamp': timestamp,
-      }, SetOptions(merge: true));
+      await sendMessage(
+          chatRoomId: chatRoomId, message: message, receiverId: user2Id);
 
       UserModel.User? user = await _authService.getUserData(user2Id);
 

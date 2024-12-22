@@ -1,6 +1,6 @@
 import 'package:eventy/core/providers/auth_provider.dart';
 import 'package:eventy/features/authentication/screens/login.dart';
-import 'package:eventy/features/conversations_List.dart';
+import 'package:eventy/features/chat/screens/conversations_List.dart';
 import 'package:eventy/features/event_management/screens/schedule_event.dart';
 import 'package:eventy/features/home/screens/home.dart';
 import 'package:eventy/features/profile/screens/profile.dart';

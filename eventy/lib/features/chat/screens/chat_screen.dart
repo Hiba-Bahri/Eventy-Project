@@ -25,6 +25,8 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     final chatService = Provider.of<ChatProvider>(context, listen: false);
+    chatService.markMessagesAsRead(widget.chatRoomId);
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     authProvider.getUserData(chatService.currentUserId!);
   }
@@ -87,17 +89,24 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ),
                               ],
                             ),
-                            child: Text(
-                              message['text'],
-                              style: TextStyle(
-                                color: isMe ? Colors.white : Colors.black,
-                                fontSize: 16,
-                              ),
-                            ),
+                            child: 
+                                Text(
+                                  message['text'],
+                                  style: TextStyle(
+                                    color: isMe ? Colors.white : Colors.black,
+                                    fontSize: 16,
+                                  ),
+                                
+                            ) 
                           ),
                           if (isMe) ...[
                             const SizedBox(width: 8),
-                            // Consumer listens to authProvider changes
+                            Icon(
+                                    message['readBy'] == null ?  Icons.check_circle_outline_rounded : Icons.check_circle_rounded,
+                                      color: Colors.green,
+                                      size: 20.0,
+                                    ),
+                                    const SizedBox(width: 8),
                             Consumer<AuthProvider>(
                               builder: (context, authProvider, _) {
                                 return CircleAvatar(
@@ -111,6 +120,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 );
                               },
                             ),
+                            
                           ],
                         ],
                       ),
