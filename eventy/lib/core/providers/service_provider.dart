@@ -1,6 +1,6 @@
 import 'package:eventy/core/services/firebase_service_services.dart';
 import 'package:eventy/data/models/Service.dart';
-//import 'package:eventy/data/models/service.dart';
+import 'package:eventy/shared/widgets/toast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -8,6 +8,7 @@ class ServiceProvider with ChangeNotifier {
   final servicesService = FirebaseServiceServices();
   bool loading = true;
   List<Service> services = [];
+  List<Service> currentUserServices = [];
   List<Service> filteredServices = [];
   User? user;
 
@@ -22,11 +23,21 @@ class ServiceProvider with ChangeNotifier {
     }
   }
 
-  void resetFilters() {
-  filteredServices = services;
-  notifyListeners();
-}
+  Future<void> getMyServices() async {
+    try {
+      currentUserServices = await servicesService.getMyServices();
+      print("------------------------$currentUserServices");
+      loading = false;
+      notifyListeners();
+    } catch (e) {
+      throw Exception("Fetch failed: $e");
+    }
+  }
 
+  void resetFilters() {
+    filteredServices = services;
+    notifyListeners();
+  }
 
   void filterServices(String query) {
     if (query.isEmpty) {
@@ -74,17 +85,32 @@ class ServiceProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /*Future<void> addService(Service service) async {
-    final serviceJson = service.toJson();
+  Future<void> addService({
+    required String userId,
+    required String category,
+    required String description,
+    required double fee,
+    required bool isFeeNegotiable,
+    required String label,
+    required int experience,
+  }) async {
     try {
-      await servicesService.addService(serviceJson);
-      await getServices(user);
+      await servicesService.addService(
+        userId: userId,
+        category: category,
+        description: description,
+        fee: fee,
+        isFeeNegotiable: isFeeNegotiable,
+        label: label,
+        experience: experience,
+      );
+      showToast(message: 'Service added successfully!');
     } catch (e) {
-      print("Error adding service: $e");
-      throw Exception("Add failed: $e");
+      showToast(message: 'Failed to add service: $e');
     }
   }
 
+/*
   Future<void> deleteService(int id) async {
     try {
       final response = await serviceService.deleteService(id);
