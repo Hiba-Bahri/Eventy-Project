@@ -1,4 +1,5 @@
 import 'package:eventy/core/providers/auth_provider.dart';
+import 'package:eventy/core/providers/chat_provider.dart';
 import 'package:eventy/features/authentication/screens/login.dart';
 import 'package:eventy/features/chat/screens/conversations_List.dart';
 import 'package:eventy/features/event_management/screens/schedule_event.dart';
@@ -18,6 +19,7 @@ class Navigation_Bar extends StatefulWidget {
 
 class _Navigation_Bar extends State<Navigation_Bar> {
   int _selectedIndex = 0;
+  int _unreadMessages = 0;
 
   static final List<Widget> _widgetOptions = <Widget>[
     const Home(),
@@ -26,6 +28,21 @@ class _Navigation_Bar extends State<Navigation_Bar> {
     const UserServices(),
     const ConversationsList(),
   ];
+
+@override
+void initState() {
+  super.initState();
+  _fetchUnreadMessages();
+}
+
+Future<void> _fetchUnreadMessages() async {
+  final chatService = Provider.of<ChatProvider>(context, listen: false);
+  final unreadCount = await chatService.getTotalUnreadMessages();
+  setState(() {
+    _unreadMessages = unreadCount;
+  });
+}
+
 
   void _onItemTapped(int index) {
     setState(() {
@@ -49,6 +66,54 @@ class _Navigation_Bar extends State<Navigation_Bar> {
       ),
     );
   }
+
+  Widget _buildChatIconWithBadge() {
+  final chatService = Provider.of<ChatProvider>(context, listen: false);
+
+  return StreamBuilder<int>(
+    stream: chatService.getTotalUnreadMessagesStream(),
+    initialData: _unreadMessages,
+    builder: (context, snapshot) {
+      final unreadMessages = snapshot.data ?? 0;
+
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          GestureDetector(
+            onTap: () => _onItemTapped(4),
+            child: Icon(
+              Icons.wechat_outlined,
+              size: _selectedIndex == 4 ? 30.0 : 24.0,
+              color: _selectedIndex == 4 ? Colors.green : Colors.grey,
+            ),
+          ),
+          if (unreadMessages > 0)
+            Positioned(
+              right: -5,
+              top: -5,
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  unreadMessages.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      );
+    },
+  );
+}
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -100,7 +165,7 @@ class _Navigation_Bar extends State<Navigation_Bar> {
                     _buildNavItem(Icons.event_note, 1),
                     const SizedBox(width: 40),
                     _buildNavItem(Icons.cases_rounded, 3),
-                    _buildNavItem(Icons.wechat_outlined, 4),
+                    _buildChatIconWithBadge(), 
                   ],
                 ),
               ),

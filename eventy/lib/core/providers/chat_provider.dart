@@ -70,27 +70,28 @@ class ChatProvider extends ChangeNotifier {
         .map((querySnapshot) => querySnapshot.docs.length);
   }
 
-  Future<void> markMessagesAsRead(String chatRoomId) async {
-    final unreadMessages = await _firestore
-        .collection('chatRooms')
-        .doc(chatRoomId)
-        .collection('messages')
-        .where('readBy', isNull: true)
-        .get();
+Future<void> markMessagesAsRead(String chatRoomId) async {
+  final unreadMessages = await _firestore
+      .collection('chatRooms')
+      .doc(chatRoomId)
+      .collection('messages')
+      .where('readBy', isNull: true)
+      .where('receiverId', isEqualTo: currentUserId)
+      .get();
 
-    for (var message in unreadMessages.docs) {
-      final readBy = message['readBy'];
+  for (var message in unreadMessages.docs) {
+    final readBy = message['readBy'];
 
-      if (readBy == null || !(readBy as List).contains(currentUserId)) {
-        if (message['senderId'] == currentUserId) {
-          return;
-        }
-        await message.reference.update({
-          'readBy': FieldValue.arrayUnion([currentUserId]),
-        });
-      }
+    if (readBy == null || !(readBy as List).contains(currentUserId)) {
+      await message.reference.update({
+        'readBy': FieldValue.arrayUnion([currentUserId]),
+      });
     }
   }
+
+  notifyListeners();
+}
+
 
   // Generate a chat room ID based on user IDs.
   String generateChatRoomId(String user1, String user2) {
@@ -138,4 +139,52 @@ class ChatProvider extends ChangeNotifier {
       return null;
     }
   }
+
+  Stream<int> getTotalUnreadMessagesStream() {
+    return _firestore
+        .collection('chatRooms')
+        .where('users', arrayContains: currentUserId)
+        .snapshots()
+        .asyncMap((snapshot) async {
+      int totalUnread = 0;
+      for (var chatRoom in snapshot.docs) {
+        final chatRoomId = chatRoom.id;
+        final unreadMessagesSnapshot = await _firestore
+            .collection('chatRooms')
+            .doc(chatRoomId)
+            .collection('messages')
+            .where('readBy', isNull: true)
+            .where('receiverId', isEqualTo: currentUserId)
+            .get();
+
+        totalUnread += unreadMessagesSnapshot.docs.length;
+      }
+      return totalUnread;
+    });
+  }
+
+  Future<int> getTotalUnreadMessages() async {
+  int totalUnread = 0;
+  final chatRoomsSnapshot = await _firestore
+      .collection('chatRooms')
+      .where('users', arrayContains: currentUserId)
+      .get();
+
+  for (var chatRoom in chatRoomsSnapshot.docs) {
+    final chatRoomId = chatRoom.id;
+    final unreadMessagesSnapshot = await _firestore
+        .collection('chatRooms')
+        .doc(chatRoomId)
+        .collection('messages')
+        .where('readBy', isNull: true)
+        .where('receiverId', isEqualTo: currentUserId)
+        .get();
+
+    totalUnread += unreadMessagesSnapshot.docs.length;
+  }
+
+  return totalUnread;
+}
+
+
 }
