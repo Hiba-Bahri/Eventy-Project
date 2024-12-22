@@ -14,6 +14,7 @@ class RequestServiceRepository {
     });
   }
 
+
   Stream<Map<String, dynamic>?> getUserRequestStream(String userId) {
     return _firestore
         .collection('requests')
@@ -75,11 +76,12 @@ class RequestServiceRepository {
             .map((doc) => doc.data())
             .toList());
   }
-    Future<void> saveNotification({
+    /* Future<void> saveNotification({
     required String senderId,
     required String receiverId,
     required String message,
     required String requestId,
+    
   }) async {
     try {
       await _firestore.collection('notifications').add({
@@ -93,7 +95,7 @@ class RequestServiceRepository {
     } catch (e) {
       throw Exception('Error saving notification: $e');
     }
-  }
+  } */
   //GET Request By ID
   Future<Map<String, dynamic>?> getRequestById(String requestId) async {
     final DocumentSnapshot doc = await _firestore.collection('requests').doc(requestId).get();
@@ -108,5 +110,53 @@ class RequestServiceRepository {
     await _firestore.collection('requests').doc(requestId).update({
       'status': status,
     });
+  }
+
+  Future<String?> getUserIdForService(String serviceId) async {
+  var docSnapshot = await _firestore.collection('services').doc(serviceId).get();
+  if (docSnapshot.exists) {
+    return docSnapshot.data()?['userId']; // Assuming userId is stored in the service document
+  }
+  return null;
+}
+  //Get User Requests
+  Stream<List<Map<String, dynamic>>> getUserRequestsStream(String serviceId) {
+  return getUserIdForService(serviceId).asStream().asyncExpand((userId) {
+    if (userId == null) {
+      return Stream.value([]); // Return empty list if userId is null
+    }
+
+    return _firestore
+        .collection('requests')
+        .where('serviceId', isEqualTo: serviceId)
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => doc.data())
+            .toList());
+  });
+}
+Stream<List<Map<String, dynamic>>> getRequestsForServiceOwner(String ownerId) {
+    return _firestore
+        .collection('services')
+        .where('userId', isEqualTo: ownerId)
+        .snapshots()
+        .asyncMap((serviceSnapshot) async {
+          // Get all services owned by this user
+          final serviceIds = serviceSnapshot.docs.map((doc) => doc.id).toList();
+          
+          if (serviceIds.isEmpty) return [];
+
+          // Get all requests for these services
+          final requestsSnapshot = await _firestore
+              .collection('requests')
+              .where('serviceId', whereIn: serviceIds)
+              .get();
+
+          return requestsSnapshot.docs.map((doc) => {
+            'id': doc.id,
+            ...doc.data(),
+          }).toList();
+        });
   }
 }

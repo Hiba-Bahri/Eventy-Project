@@ -39,7 +39,6 @@ class _RequestServiceState extends State<RequestService> {
   void initState() {
     super.initState();
     context.read<RequestServiceProvider>().init(widget.userId);
-    context.read<RequestServiceProvider>().initNotificationsListener(widget.userId);
   }
 
   @override
@@ -124,11 +123,11 @@ class _RequestServiceState extends State<RequestService> {
                                   );
 
                                   // Send the notification with the requestId
-                                  await provider.sendNotification(
+                                  /* await provider.sendNotification(
                                     receiverId: service['userId'],
                                     message: 'New service request for ${service['label']}',
                                     requestId: requestId, // Pass the requestId here
-                                  );
+                                  ); */
 
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(

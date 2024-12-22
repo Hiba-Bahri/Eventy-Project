@@ -4,7 +4,7 @@ import 'package:eventy/features/authentication/screens/login.dart';
 import 'package:eventy/features/conversations_List.dart';
 import 'package:eventy/features/event_management/screens/schedule_event.dart';
 import 'package:eventy/features/home/screens/home.dart';
-import 'package:eventy/features/notifications/notifications_page.dart';
+import 'package:eventy/features/notifications/my_offers.dart';
 import 'package:eventy/features/profile/screens/profile.dart';
 import 'package:eventy/features/user_events/screens/user_events.dart';
 import 'package:eventy/features/user_services.dart';
@@ -54,14 +54,11 @@ class _Navigation_Bar extends State<Navigation_Bar> {
 
    @override
   Widget build(BuildContext context) {
-    return Consumer2<AuthProvider, NotificationProvider>(
-      builder: (context, authProvider, notificationProvider, _) {
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
         if (!authProvider.isLoggedIn) {
           return const Login();
         }
-
-        // Listen to notifications for the logged-in user
-        notificationProvider.listenToNotifications(authProvider.user!.uid);
 
         return Scaffold(
           appBar: AppBar(
@@ -80,29 +77,12 @@ class _Navigation_Bar extends State<Navigation_Bar> {
             ),
             actions: [
               IconButton(
-                icon: Stack(
-                  children: [
-                    const Icon(Icons.notifications),
-                    if (notificationProvider.unreadNotificationsCount > 0)
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: CircleAvatar(
-                          radius: 8,
-                          backgroundColor: Colors.red,
-                          child: Text(
-                            '${notificationProvider.unreadNotificationsCount}',
-                            style: const TextStyle(fontSize: 12, color: Colors.white),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+                icon: const Icon(Icons.notifications, color: Colors.white,),    
                 onPressed: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>  NotificationsPage(),
+                      builder: (context) =>  const MyOffers(),
                     ),
                   );
                 },

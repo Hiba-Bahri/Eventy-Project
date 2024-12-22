@@ -4,7 +4,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class RequestServiceProvider extends ChangeNotifier {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final RequestServiceRepository _repository;
+    List<Map<String, dynamic>> _serviceOwnerRequests = [];
+  List<Map<String, dynamic>> get serviceOwnerRequests => _serviceOwnerRequests;
   
   List<Map<String, dynamic>> _services = [];
   List<Map<String, dynamic>> _filteredServices = [];
@@ -19,7 +22,6 @@ class RequestServiceProvider extends ChangeNotifier {
 
   RequestServiceProvider(this._repository);
 
-  List<Map<String, dynamic>> get notifications => _notifications;
   List<Map<String, dynamic>> get services => _services;
   List<Map<String, dynamic>> get filteredServices => _filteredServices;
   Map<String, dynamic>? get currentRequest => _currentRequest;
@@ -40,42 +42,6 @@ class RequestServiceProvider extends ChangeNotifier {
     });
   }
 
-  void initNotificationsListener(String userId) {
-  FirebaseFirestore.instance
-      .collection('notifications')
-      .where('receiverId', isEqualTo: userId) // Receiver of the notification
-      .where('read', isEqualTo: false) // Only unread notifications
-      .orderBy('timestamp', descending: true) // Order by timestamp
-      .snapshots()
-      .listen((snapshot) {
-    _notifications = snapshot.docs
-        .map((doc) {
-          var data = doc.data();
-          return {
-            'id': doc.id,
-            'senderId': data['senderId'],
-            'receiverId': data['receiverId'],
-            'message': data['message'],
-            'timestamp': data['timestamp'],
-            'read': data['read'],
-          };
-        })
-        .toList();
-    print('Fetched notifications: $_notifications'); // Debugging line
-    notifyListeners();
-  });
-}
-
-
-  Future<void> markNotificationsAsRead(List<String> notificationIds) async {
-    final batch = FirebaseFirestore.instance.batch();
-    for (var id in notificationIds) {
-      final docRef = FirebaseFirestore.instance.collection('notifications').doc(id);
-      batch.update(docRef, {'read': true});
-    }
-    await batch.commit();
-    notifyListeners();
-  }
   
   void initRequestsListener(String eventId, String userId) {
     _repository.getServiceRequestsStream(eventId, userId).listen((requests) {
@@ -84,30 +50,6 @@ class RequestServiceProvider extends ChangeNotifier {
       notifyListeners();
     });
   }
-  
-
-  Future<void> sendNotification({
-  required String receiverId,
-  required String message,
-  required String requestId,
-}) async {
-    try {
-    // Get the current logged-in user's ID (sender)
-    String senderId = FirebaseAuth.instance.currentUser!.uid;
-
-    // Call the repository to save the notification
-    await _repository.saveNotification(
-      senderId: senderId,
-      receiverId: receiverId,
-      message: message,
-      requestId: requestId, // Include the requestId in the notification
-    );
-
-    notifyListeners(); // Notify listeners after sending the notification
-  } catch (e) {
-    print('Error sending notification: $e');
-  }
-}
 
   void filterServices(String? category) {
     _selectedCategory = category;
@@ -172,6 +114,42 @@ class RequestServiceProvider extends ChangeNotifier {
       throw Exception('Invalid status');
     }
     await _repository.respondToRequest(requestId, status);
+    notifyListeners();
+  }
+
+  //Fetch the requests for the current user
+  Stream<List<Map<String, dynamic>>> getUserRequestsStream(String userId) {
+    return _repository.getUserRequestsStream(userId);
+  }
+
+  Future<void> getRequestsForServiceOwner(String ownerId) async {
+    // First get all services owned by this user
+    final servicesSnapshot = await _firestore
+        .collection('services')
+        .where('userId', isEqualTo: ownerId)
+        .get();
+    
+    final serviceIds = servicesSnapshot.docs.map((doc) => doc.id).toList();
+    
+    if (serviceIds.isEmpty) {
+      _serviceOwnerRequests = [];
+      notifyListeners();
+      return;
+    }
+
+    // Then get all requests for these services
+    final requestsSnapshot = await _firestore
+        .collection('requests')
+        .where('serviceId', whereIn: serviceIds)
+        .get();
+
+    _serviceOwnerRequests = requestsSnapshot.docs
+        .map((doc) => {
+          'id': doc.id,
+          ...doc.data(),
+        })
+        .toList();
+    
     notifyListeners();
   }
 }

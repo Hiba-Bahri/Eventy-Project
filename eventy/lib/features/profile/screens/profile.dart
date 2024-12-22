@@ -100,8 +100,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
     try {
       // Clear notifications first
-      final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
-      await notificationProvider.clearListeners(); // Make sure this completes first
+      //final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+      //await notificationProvider.clearListeners(); // Make sure this completes first
 
       // Then logout
       await authProvider.logout();

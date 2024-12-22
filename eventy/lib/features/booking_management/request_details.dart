@@ -1,5 +1,7 @@
 import 'package:eventy/core/providers/auth_provider.dart';
+import 'package:eventy/core/providers/chat_provider.dart';
 import 'package:eventy/core/providers/service_provider.dart';
+import 'package:eventy/features/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -57,47 +59,135 @@ class _RequestDetailsState extends State<RequestDetails> {
     );
   }
 }
+//Initiate Chat
+Future<void> _initiateChat() async {
+  try {
+    print("Starting chat initiation...");
+    final chatProvider = context.read<ChatProvider>();
+    final authProvider = context.read<AuthProvider>();
+    
+    print("Current user ID: ${authProvider.user?.uid}");
+    print("Service owner ID: ${requestDetails?['serviceOwnerId']}");
+    print("Sender ID: ${requestDetails?['userId']}");
+
+    // Determine who is the other user in the chat
+    String otherUserId;
+    if (authProvider.user!.uid == requestDetails!['serviceOwnerId']) {
+      // If current user is service owner, chat with request sender
+      otherUserId = requestDetails!['userId'];
+      print("Current user is service owner, chatting with: $otherUserId");
+    } else {
+      // If current user is request sender, chat with service owner
+      otherUserId = requestDetails!['serviceOwnerId'];
+      print("Current user is sender, chatting with: $otherUserId");
+    }
+
+    print("Initiating chat room...");
+    final chatDetails = await chatProvider.initiateChatRoomAndSendMessage(
+      user1Id: authProvider.user!.uid,
+      user2Id: otherUserId,
+    );
+    print("Chat details received: $chatDetails");
+
+    if (chatDetails != null) {
+      final [chatRoomId, receiverId, receiverUsername] = chatDetails;
+      print("Navigating to chat screen with room ID: $chatRoomId");
+      
+      // Navigate to ChatScreen
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChatScreen(
+            chatRoomId: chatRoomId,
+            receiverId: receiverId,
+            senderUsername: receiverUsername,
+          ),
+        ),
+      );
+    } else {
+      print("Chat details were null");
+      throw Exception("Failed to create chat room");
+    }
+  } catch (e, stackTrace) {
+    print("Error in _initiateChat: $e");
+    print("Stack trace: $stackTrace");
+    
+    if (mounted) {  // Check if the widget is still in the tree
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error starting chat: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+}
 
 //Accept Request
 void acceptRequest() async {
-  try {
-    final requestProvider = context.read<RequestServiceProvider>();
-    await requestProvider.updateRequestStatus(widget.requestId, 'Accepted');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Request accepted successfully!'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error: $e'),
-        backgroundColor: Colors.red,
-      ),
-    );
+    try {
+      final requestProvider = context.read<RequestServiceProvider>();
+      await requestProvider.updateRequestStatus(widget.requestId, 'Accepted');
+      
+      // Send notification to the user who requested
+      /*await requestProvider.sendNotification(
+        receiverId: requestDetails!['userId'], // ID of user who made the request
+        message: 'Your request for ${requestDetails!['serviceLabel']} has been accepted!',
+        requestId: widget.requestId,
+      );
+      */
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Request accepted successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
-}
-//Reject Request
-void rejectRequest() async {
-  try {
-    final requestProvider = context.read<RequestServiceProvider>();
-    await requestProvider.updateRequestStatus(widget.requestId, 'Rejected');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Request rejected successfully!'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error: $e'),
-        backgroundColor: Colors.red,
-      ),
-    );
+
+  void rejectRequest() async {
+    try {
+      final requestProvider = context.read<RequestServiceProvider>();
+      await requestProvider.updateRequestStatus(widget.requestId, 'Rejected');
+      
+      // Send notification to the user who requested
+      /*await requestProvider.sendNotification(
+        receiverId: requestDetails!['userId'], // ID of user who made the request
+        message: 'Your request for ${requestDetails!['serviceLabel']} has been rejected.',
+        requestId: widget.requestId,
+      );*/
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Request rejected successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -153,12 +243,25 @@ void rejectRequest() async {
                       ),
                       // Check if the connected user is the service owner
                     const SizedBox(height: 10),
-                      ElevatedButton(onPressed: ()=>{
-                        // Start Chat
-                        print("Start Chat")
-                      }, child: const Text('Chat')),
+                      ElevatedButton(
+                        onPressed: () {
+                          print("Button pressed!");
+                          _initiateChat();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          backgroundColor: Colors.blue,  // Make it visibly blue
+                        ),
+                        child: const Text(
+                          'Chat',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
                     const SizedBox(height: 10),
-                    if (requestDetails!['serviceOwnerId'].trim() == authProvider.user!.uid.trim()) ...[
+                    if (requestDetails!['serviceOwnerId'].trim() == authProvider.user!.uid.trim() && requestDetails!['status'] == 'Pending') ...[
                     Row(children: [
                       ElevatedButton(
                         onPressed: ()=> acceptRequest(),
