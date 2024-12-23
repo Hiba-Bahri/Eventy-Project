@@ -3,6 +3,7 @@ import 'package:eventy/core/providers/chat_provider.dart';
 import 'package:eventy/core/providers/event_details_provider.dart';
 import 'package:eventy/core/providers/request_service_provider.dart';
 import 'package:eventy/core/providers/service_provider.dart';
+import 'package:eventy/core/providers/user_profile_provider.dart';
 import 'package:eventy/core/services/event_service.dart';
 import 'package:eventy/core/services/request_service_repository.dart';
 import 'package:eventy/features/authentication/screens/login.dart';
@@ -23,6 +24,7 @@ void main() async{
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => EventDetailsProvider(eventService: EventService(), eventId: mockEventId, userId: mockUserId)),
         ChangeNotifierProvider(create: (_) => RequestServiceProvider(RequestServiceRepository())),
+        ChangeNotifierProvider(create: (_) => UserProfileProvider()),
         //ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: const MyApp(),
