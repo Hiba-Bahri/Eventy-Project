@@ -11,6 +11,8 @@ Future<void> showAddServiceDialog(BuildContext context) async {
   final TextEditingController labelController = TextEditingController();
   bool isFeeNegotiable = false;
   String? selectedCategory;
+  String? stateValue;
+
 
   final authProvider = Provider.of<AuthProvider>(context, listen: false);
   final serviceProvider = Provider.of<ServiceProvider>(context, listen: false);
@@ -27,6 +29,51 @@ Future<void> showAddServiceDialog(BuildContext context) async {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  const Text('State', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              DropdownButtonFormField<String>(
+                value: stateValue,
+                items: [
+                  'Ariana',
+                  'Beja',
+                  'Ben Arous',
+                  'Bizerte',
+                  'Gabes',
+                  'Gafsa',
+                  'Jendouba',
+                  'Kairaouan',
+                  'Kasserine',
+                  'Kebili',
+                  'Le Keef',
+                  'Mahdia',
+                  'La Manouba',
+                  'Medenine',
+                  'Monastir',
+                  'Nabeul',
+                  'Sfax',
+                  'Sidi Bouzid',
+                  'Siliana',
+                  'Sousse',
+                  'Tataouine',
+                  'Tozeur',
+                  'Tunis',
+                  'Zaghouan'
+                ]
+                    .map((state) => DropdownMenuItem(
+                          value: state,
+                          child: Text(state),
+                        ))
+                    .toList(),
+                onChanged: (value) => setState(() => stateValue = value),
+                decoration: InputDecoration(
+                  hintText: 'Select state',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+                  const SizedBox(height: 16),
+
                   DropdownButtonFormField<String>(
                     value: selectedCategory,
                     decoration: const InputDecoration(
@@ -115,6 +162,7 @@ Future<void> showAddServiceDialog(BuildContext context) async {
               try {
                 await serviceProvider.addService(
                   userId: authProvider.user!.uid,
+                  state: stateValue!,
                   category: selectedCategory!,
                   description: descriptionController.text,
                   fee: double.tryParse(feeController.text) ?? 0.0,

@@ -6,7 +6,7 @@ import 'package:eventy/features/event_management/screens/schedule_event.dart';
 import 'package:eventy/features/home/screens/home.dart';
 import 'package:eventy/features/profile/screens/profile.dart';
 import 'package:eventy/features/user_events/screens/user_events.dart';
-import 'package:eventy/features/user_services.dart';
+import 'package:eventy/features/user_services/screens/user_services.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

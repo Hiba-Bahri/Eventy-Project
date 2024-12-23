@@ -26,16 +26,18 @@ class FirebaseServiceServices {
 
   Future<List<ServiceModel.Service>> getMyServices() async {
     try {
+      
       QuerySnapshot querySnapshot = await _firestore
           .collection('services')
           .where('userId', isEqualTo: _auth.currentUser!.uid)
           .get();
+          print("------------my services-------------$querySnapshot");
+
       List<ServiceModel.Service> myServices = [];
       for (QueryDocumentSnapshot doc in querySnapshot.docs) {
         myServices.add(ServiceModel.Service.fromSnapshot(
             doc as DocumentSnapshot<Map<String, dynamic>>));
       }
-      print("-------------------------$myServices");
       return myServices;
     } catch (e) {
       print('Failed to fetch the current user\'s service data: $e');
@@ -46,6 +48,7 @@ class FirebaseServiceServices {
 
   Future<void> addService({
     required String userId,
+    required String state,
     required String category,
     required String description,
     required double fee,
@@ -55,6 +58,7 @@ class FirebaseServiceServices {
   }) async {
     try {
       final serviceData = {
+        'state': state,
         'category': category,
         'description': description,
         'fee': fee,
