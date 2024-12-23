@@ -1,3 +1,4 @@
+import 'package:eventy/features/user_services/screens/service_details.dart';
 import 'package:flutter/material.dart';
 import '../../../data/models/Service.dart';
 
@@ -23,7 +24,15 @@ class ServiceCardGrid extends StatelessWidget {
         itemBuilder: (context, index) {
           final service = services[index];
 
-          return Card(
+          return GestureDetector(
+                  onTap: (){
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ServiceDetails(serviceId: service.id),
+                        ),
+                      );                  },
+                  child: Card(
             elevation: 6.0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.0),
@@ -57,7 +66,8 @@ class ServiceCardGrid extends StatelessWidget {
                 ],
               ),
             ),
-          );
+          )
+        );
         },
       ),
     );

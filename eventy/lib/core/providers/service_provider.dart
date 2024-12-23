@@ -136,4 +136,36 @@ Future<void> deleteService(String id) async {
   }
 }
 
+Future<Service?> fetchServiceById(String serviceId) async {
+  try {
+    final serviceData = await servicesService.getServiceById(serviceId);
+    if (serviceData != null) {
+      return Service(
+        id: serviceData['id'],
+        label: serviceData['label'],
+        category: serviceData['category'],
+        state: serviceData['state'],
+        description: serviceData['description'],
+        experience: serviceData['experience'],
+        fee: serviceData['fee'],
+        isFeeNegotiable: serviceData['is_fee_negotiable'],
+        userId: serviceData['userId'],
+      );
+    }
+    return null;
+  } catch (e) {
+    debugPrint("Error fetching service by ID: $e");
+    return null;
+  }
+}
+
+  Future<bool> updateServiceData(String serviceId, Map<String, dynamic> data) async {
+    final serviceService = FirebaseServiceServices();
+    final result = await serviceService.updateServiceData(serviceId, data);
+    if (result) {
+      await getMyServices();
+    }
+    return result;
+  }
+
 }

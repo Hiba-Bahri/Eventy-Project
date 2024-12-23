@@ -1,3 +1,4 @@
+import 'package:eventy/features/user_services/screens/service_details.dart';
 import 'package:eventy/features/user_services/widgets/delete_pop_up.dart';
 import 'package:flutter/material.dart';
 import '../../../data/models/Service.dart';
@@ -31,6 +32,13 @@ class ServiceCardsGrid extends StatelessWidget {
                     print("----------------------------------------");
                     showDeleteDialog(context: context, id: service.id);
                   },
+                  onTap: (){
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ServiceDetails(serviceId: service.id),
+                        ),
+                      );                  },
                   child: Card(
                     elevation: 6.0,
                     shape: RoundedRectangleBorder(
