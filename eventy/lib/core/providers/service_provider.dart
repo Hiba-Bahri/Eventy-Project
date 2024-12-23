@@ -120,18 +120,20 @@ class ServiceProvider with ChangeNotifier {
     }
   }
 
-/*
-  Future<void> deleteService(int id) async {
-    try {
-      final response = await serviceService.deleteService(id);
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        await getServices(user);
-      } else {
-        throw Exception("Failed to delete service: ${response.body}");
-      }
-    } catch (e) {
-      debugPrint("Error deleting service: $e");
-      rethrow;
+
+Future<void> deleteService(String id) async {
+  try {
+    final result = await servicesService.deleteService(id);
+
+    if (result == 'Service deleted successfully') {
+      await getMyServices();
+    } else {
+      throw Exception("Failed to delete service: $result");
     }
-  }*/
+  } catch (e) {
+    debugPrint("Error deleting service: $e");
+    rethrow;
+  }
+}
+
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../../../data/models/Service.dart';
 
 class ServiceCardGrid extends StatelessWidget {
@@ -12,19 +11,19 @@ class ServiceCardGrid extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12.0,
-        mainAxisSpacing: 12.0,
-        childAspectRatio: 3 / 2,
-      ),
-      itemCount: services.length,
-      
-      itemBuilder: (context, index) {
-        final service = services[index];
-        return Card(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12.0,
+          mainAxisSpacing: 12.0,
+          childAspectRatio: 3 / 2,
+        ),
+        itemCount: services.length,
+        itemBuilder: (context, index) {
+          final service = services[index];
+
+          return Card(
             elevation: 6.0,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16.0),

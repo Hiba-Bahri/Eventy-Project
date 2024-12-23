@@ -84,6 +84,18 @@ class FirebaseServiceServices {
       return false;
     }
   }
+
+Future<String> deleteService(String serviceId) async {
+  try {
+    await _firestore.collection('services').doc(serviceId).delete();
+    return 'Service deleted successfully';
+  } catch (e) {
+    showToast(message: 'Failed to delete service data');
+    return 'Failed to delete service data';
+  }
+}
+
+
   //Get Service By ID :
   Future<Map<String, dynamic>?> getServiceById(String serviceId) async {
    final DocumentSnapshot doc = await _firestore.collection('services').doc(serviceId).get();

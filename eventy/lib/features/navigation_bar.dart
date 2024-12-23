@@ -1,5 +1,4 @@
 import 'package:eventy/core/providers/auth_provider.dart';
-import 'package:eventy/core/providers/notification_provider.dart';
 import 'package:eventy/core/providers/chat_provider.dart';
 import 'package:eventy/features/authentication/screens/login.dart';
 import 'package:eventy/features/chat/screens/conversations_List.dart';
@@ -69,7 +68,7 @@ Future<void> _fetchUnreadMessages() async {
     );
   }
 
-   @override
+  
   Widget _buildChatIconWithBadge() {
   final chatService = Provider.of<ChatProvider>(context, listen: false);
 

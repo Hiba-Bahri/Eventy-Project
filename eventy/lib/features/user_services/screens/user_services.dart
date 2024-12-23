@@ -1,6 +1,6 @@
 import 'package:eventy/core/providers/service_provider.dart';
-import 'package:eventy/features/home/widgets/service_card.dart';
 import 'package:eventy/features/user_services/widgets/add_service_dialog.dart';
+import 'package:eventy/features/user_services/widgets/service_cards.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -33,7 +33,7 @@ class _UserServicesState extends State<UserServices> {
         ),
         const SizedBox(height: 16),
         Consumer<ServiceProvider>(builder: (context, serviceProvider, _) {
-          return ServiceCardGrid(services: serviceProvider.currentUserServices);
+          return ServiceCardsGrid(services: serviceProvider.currentUserServices);
         })
       ])),
     );
