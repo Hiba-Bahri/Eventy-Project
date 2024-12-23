@@ -1,10 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eventy/core/providers/auth_provider.dart';
-import 'package:eventy/core/providers/notification_provider.dart';
-import 'package:eventy/features/authentication/screens/login.dart';
-import 'package:eventy/shared/widgets/toast.dart';
+import 'package:eventy/core/providers/user_profile_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../authentication/screens/login.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../shared/widgets/toast.dart';
+import '../widgets/editable_profile_header.dart';
+import '../widgets/user_profile_header.dart';
+import '../widgets/user_profile_actions.dart';
 
 class UserProfilePage extends StatefulWidget {
   const UserProfilePage({super.key});
@@ -14,114 +16,37 @@ class UserProfilePage extends StatefulWidget {
 }
 
 class _UserProfilePageState extends State<UserProfilePage> {
-  bool isExpanded = false;
-  Map<String, dynamic>? userData;
-  bool isLoading = true;
-
-  bool isEditing = false;
-
-  late TextEditingController _usernameController;
-  late TextEditingController _phoneController;
-  late TextEditingController _addressController;
-
   @override
   void initState() {
     super.initState();
-    _usernameController = TextEditingController();
-    _phoneController = TextEditingController();
-    _addressController = TextEditingController();
-    _fetchUserData();
+    _initializeProfile();
   }
 
-  @override
-  void dispose() {
-    _usernameController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _fetchUserData() async {
-    try{
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      if (authProvider.user != null){
-        final userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(authProvider.user!.uid)
-          .get();
-
-        setState(() {
-          userData = userDoc.data();
-          _usernameController.text = userData?['username'] ?? '';
-          _phoneController.text = userData?['phone'] ?? '';
-          _addressController.text = userData?['address'] ?? '';
-          isLoading = false;
-        });
+  Future<void> _initializeProfile() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.user != null) {
+      final profileProvider = Provider.of<UserProfileProvider>(context, listen: false);
+      try {
+        await profileProvider.fetchUserData(authProvider.user!.uid);
+      } catch (e) {
+        showToast(message: e.toString());
       }
-    }catch(e){
-      setState(() {
-        isLoading = false;
-      });
-      showToast(message: "Failed to fetch user data: $e");
     }
   }
 
-  Future<void> _saveProfileChanges() async {
-    try {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      if (authProvider.user != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(authProvider.user!.uid)
-            .update({
-          'username': _usernameController.text,
-          'phone': _phoneController.text,
-          'address': _addressController.text,
-        });
-
-        // Refresh user data
-        await _fetchUserData();
-
-        setState(() {
-          isEditing = false;
-        });
-
-        showToast(message: "Profile updated successfully");
-      }
-    } catch (e) {
-      showToast(message: "Failed to update profile: $e");
-    }
-  }
-  
   Future<void> handleSignOut(AuthProvider authProvider) async {
-    setState(() {
-      isLoading = true;
-    });
-
     try {
-      // Clear notifications first
-      //final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
-      //await notificationProvider.clearListeners(); // Make sure this completes first
-
-      // Then logout
       await authProvider.logout();
-
-      // Finally navigate
-      if (mounted) { // Check if widget is still mounted
+      if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => const Login(),
-          ),
-          (route) => false, // This removes all previous routes
+          MaterialPageRoute(builder: (context) => const Login()),
+          (route) => false,
         );
       }
     } catch (e) {
-      if (mounted) { // Check if widget is still mounted
+      if (mounted) {
         showToast(message: "Sign-out failed: $e");
-        setState(() {
-          isLoading = false;
-        });
       }
     }
   }
@@ -133,401 +58,381 @@ class _UserProfilePageState extends State<UserProfilePage> {
     required VoidCallback onConfirm,
     required String confirmText,
   }) async {
-      final result = await showDialog<bool>(
+    final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(title),
         content: Text(message),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false),
-           child: const Text('No'))
-           ,
-           ElevatedButton(onPressed: (){
-            Navigator.of(context).pop(true);
-           }, child: Text(confirmText)
-           )
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(confirmText),
+          ),
         ],
-      ));
-      if (result == true){
-        onConfirm();
-      }
-  }
-
-  Future<void> toggleServiceProviderStatus(bool status) async{
-    try{
-        final authProvider = Provider.of<AuthProvider>(context, listen: false);
-        if(authProvider.user != null){
-          await FirebaseFirestore.instance
-          .collection('users')
-          .doc(authProvider.user!.uid)
-          .update({
-            'is_service_provider': status,
-          });
-          await _fetchUserData();
-          showToast(message: status? "You are now a service provider" : "You are no longer a service provider");
-        }
-    }catch(e){
-      showToast(message: "Failed to update status $e");
+      ),
+    );
+    
+    if (result == true) {
+      onConfirm();
     }
   }
-
-
-
-  
-
 
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    final profileProvider = Provider.of<UserProfileProvider>(context);
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.green[600],
-        title: const Text(
-          'User Profile', 
-          style: TextStyle(
-            color: Colors.white, 
+      body: profileProvider.isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+              ),
+            )
+          : CustomScrollView(
+              slivers: [
+                _buildSliverAppBar(profileProvider),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      children: [
+                        _buildProfileHeader(size, profileProvider),
+                        const SizedBox(height: 20),
+                        _buildStatsCard(),
+                        const SizedBox(height: 20),
+                        _buildActionButtons(),
+                        const SizedBox(height: 20),
+                        if (profileProvider.isServiceProvider)
+                          _buildServiceProviderSection(profileProvider, authProvider),
+                        const SizedBox(height: 20),
+                        _buildSignOutButton(authProvider),
+                        const SizedBox(height: 30),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildSliverAppBar(UserProfileProvider profileProvider) {
+    return SliverAppBar(
+      expandedHeight: 200.0,
+      floating: false,
+      pinned: true,
+      flexibleSpace: FlexibleSpaceBar(
+        title: Text(
+          profileProvider.username,
+          style: const TextStyle(
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
         ),
-        centerTitle: true,
-        actions: [
-          if (!isEditing)
-            IconButton(
-              icon: const Icon(Icons.edit, color: Colors.white),
-              onPressed: () {
-                setState(() {
-                  isEditing = true;
-                });
-              },
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.green[700]!,
+                    Colors.green[500]!,
+                  ],
+                ),
+              ),
             ),
-          if (isEditing)
-            IconButton(
-              icon: const Icon(Icons.save, color: Colors.white),
-              onPressed: _saveProfileChanges,
+            const Positioned(
+              right: -50,
+              top: -50,
+              child: CircleAvatar(
+                radius: 130,
+                backgroundColor: Colors.white10,
+              ),
             ),
+            const Positioned(
+              left: -30,
+              bottom: -50,
+              child: CircleAvatar(
+                radius: 100,
+                backgroundColor: Colors.white10,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        if (!profileProvider.isEditing)
+          IconButton(
+            icon: const Icon(Icons.edit, color: Colors.white),
+            onPressed: profileProvider.toggleEditing,
+          ),
+        if (profileProvider.isEditing)
+          IconButton(
+            icon: const Icon(Icons.save, color: Colors.white),
+            onPressed: () async {
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              try {
+                await profileProvider.saveProfileChanges(authProvider.user!.uid);
+                showToast(message: "Profile updated successfully");
+              } catch (e) {
+                showToast(message: e.toString());
+              }
+            },
+          ),
+      ],
+    );
+  }
+
+  Widget _buildProfileHeader(Size size, UserProfileProvider profileProvider) {
+    return Container(
+      margin: const EdgeInsets.only(top: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 5,
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
-      body: isLoading
-        ? const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+      child: !profileProvider.isEditing
+          ? UserProfileHeader(
+              name: profileProvider.username,
+              phone: profileProvider.phone,
+              email: profileProvider.email,
+              address: profileProvider.address,
+            )
+          : EditableProfileHeader(
+              usernameController: profileProvider.usernameController,
+              phoneController: profileProvider.phoneController,
+              addressController: profileProvider.addressController,
+              email: profileProvider.email,
             ),
-          )
-        : SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Profile Card
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: !isEditing
-                        ? UserProfileHeader(
-                            name: userData?['username'] ?? 'N/A',
-                            phone: userData?['phone'] ?? 'N/A',
-                            email: userData?['email'] ?? 'N/A',
-                            address: userData?['address'] ?? 'N/A',
-                          )
-                        : EditableProfileHeader(
-                            usernameController: _usernameController,
-                            phoneController: _phoneController,
-                            addressController: _addressController,
-                            email: userData?['email'] ?? 'N/A',
-                          ),
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Become Service Provider Section
-                  UserProfileActions(
-                    isServiceProvider: userData?['is_service_provider']?? false,
-                    onToggleServiceProvider: () {
-                      final newStatus = !(userData?['is_service_provider'] ?? false);
-                      showConfirmDialog(
-                        context: context,
-                        title: newStatus
-                            ? 'Become a Service Provider'
-                            : 'Cancel Becoming a Service Provider',
-                        message: newStatus
-                            ? 'Are you sure you want to become a service provider?'
-                            : 'Are you sure you want to cancel becoming a service provider?',
-                        confirmText: 'Yes',
-                        onConfirm: () => toggleServiceProviderStatus(newStatus),
-                      );
-                    },
-                    onAddService: () => {},
-                  ),
-                  
-                  if (isExpanded) ...[
-                    const SizedBox(height: 16),
-                    const UserProfileForm(),
-                  ],
-                  
-                  const SizedBox(height: 20),
-                  
-                  // Sign Out Button
-                  ElevatedButton.icon(
-                    onPressed: () => handleSignOut(authProvider),
-                    icon: const Icon(Icons.logout, color: Colors.white),
-                    label: const Text(
-                      'Sign Out',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red[600],
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      elevation: 3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
     );
   }
-}
 
-class EditableProfileHeader extends StatelessWidget{
-final TextEditingController usernameController;
-  final TextEditingController phoneController;
-  final TextEditingController addressController;
-  final String email;
-  
-  const EditableProfileHeader({
-    super.key,
-    required this.usernameController,
-    required this.phoneController,
-    required this.addressController,
-    required this.email,
-});
-@override
-Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: usernameController,
-          decoration: InputDecoration(
-            labelText: 'Username',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            filled: true,
-            fillColor: Colors.white,
+  Widget _buildStatsCard() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 5,
+            blurRadius: 10,
           ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: phoneController,
-          decoration: InputDecoration(
-            labelText: 'Phone',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            filled: true,
-            fillColor: Colors.white,
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildStatItem(
+            icon: Icons.event,
+            label: 'Events',
+            value: '12',
           ),
-          keyboardType: TextInputType.phone,
-        ),
-        const SizedBox(height: 8),
-        Text('Email: $email', style: const TextStyle(fontSize: 16)),
-        const SizedBox(height: 8),
-        TextField(
-          controller: addressController,
-          decoration: InputDecoration(
-            labelText: 'Address',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            filled: true,
-            fillColor: Colors.white,
+          _buildStatItem(
+            icon: Icons.star,
+            label: 'Rating',
+            value: '4.8',
           ),
-        ),
-      ],
+          _buildStatItem(
+            icon: Icons.people,
+            label: 'Followers',
+            value: '256',
+          ),
+        ],
+      ),
     );
   }
-}
 
-class UserProfileHeader extends StatelessWidget {
-  final String name;
-  final String phone;
-  final String email;
-  final String address;
-
-  const UserProfileHeader({
-    super.key,
-    required this.name,
-    required this.phone,
-    required this.email,
-    required this.address,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildStatItem({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Icon(icon, color: Colors.green[600], size: 30),
+        const SizedBox(height: 8),
         Text(
-          'Username: $name',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-        ),
-        const SizedBox(height: 8),
-        Text('Phone: $phone'),
-        const SizedBox(height: 8),
-        Text('Email: $email'),
-        const SizedBox(height: 8),
-        Text('Address: $address'),
-      ],
-    );
-  }
-}
-
-class UserProfileActions extends StatelessWidget {
-  final bool isServiceProvider;
-  final VoidCallback onAddService;
-  final VoidCallback onToggleServiceProvider;
-
-  const UserProfileActions({
-    super.key,
-    required this.isServiceProvider,
-    required this.onAddService,
-    required this.onToggleServiceProvider,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ElevatedButton(
-          onPressed: onToggleServiceProvider,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isServiceProvider ? Colors.red : Colors.green,
-            foregroundColor: Colors.white,
-          ),
-          child: Text(isServiceProvider
-              ? 'Cancel Becoming Service Provider'
-              : 'Become Service Provider'),
-        ),
-      ],
-    );
-  }
-}
-
-
-class UserProfileForm extends StatefulWidget {
-  const UserProfileForm({super.key});
-
-  @override
-  _UserProfileFormState createState() => _UserProfileFormState();
-}
-
-class _UserProfileFormState extends State<UserProfileForm> {
-  final _serviceTypeController = TextEditingController();
-  final _experienceController = TextEditingController();
-  final _descriptionController = TextEditingController();
-
-  @override
-  void dispose() {
-    _serviceTypeController.dispose();
-    _experienceController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
-  }
-
-  void _submitForm() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Submitted successfully!')),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-
-
-
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Additional Information',
-          style: TextStyle(
-            fontSize: 16,
+          value,
+          style: const TextStyle(
+            fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: _serviceTypeController,
-          decoration: InputDecoration(
-            labelText: 'Service Type',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _experienceController,
-          decoration: InputDecoration(
-            labelText: 'Experience (in years)',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _descriptionController,
-          decoration: InputDecoration(
-            labelText: 'Description',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Center(
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              foregroundColor: Colors.white,
-              backgroundColor: Colors.green,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 12,
-              ),
-              
-            ),
-            onPressed: _submitForm,
-            child: const Text('Submit'),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontSize: 14,
           ),
         ),
       ],
     );
   }
 
+  Widget _buildActionButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildActionButton(
+            icon: Icons.event_available,
+            label: 'My Events',
+            onTap: () {
+              // Navigate to events
+            },
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildActionButton(
+            icon: Icons.notifications,
+            label: 'Notifications',
+            onTap: () {
+              // Navigate to notifications
+            },
+          ),
+        ),
+      ],
+    );
+  }
 
-}
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 5,
+              blurRadius: 10,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: Colors.green[600], size: 30),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServiceProviderSection(
+    UserProfileProvider profileProvider,
+    AuthProvider authProvider,
+  ) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 5,
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Service Provider',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          UserProfileActions(
+            isServiceProvider: profileProvider.isServiceProvider,
+            onToggleServiceProvider: () {
+              final newStatus = !profileProvider.isServiceProvider;
+              showConfirmDialog(
+                context: context,
+                title: newStatus
+                    ? 'Become a Service Provider'
+                    : 'Cancel Service Provider Status',
+                message: newStatus
+                    ? 'Are you sure you want to become a service provider?'
+                    : 'Are you sure you want to cancel your service provider status?',
+                confirmText: 'Yes',
+                onConfirm: () async {
+                  try {
+                    await profileProvider.toggleServiceProviderStatus(
+                      authProvider.user!.uid,
+                      newStatus,
+                    );
+                    showToast(
+                      message: newStatus
+                          ? "You are now a service provider"
+                          : "You are no longer a service provider",
+                    );
+                  } catch (e) {
+                    showToast(message: e.toString());
+                  }
+                },
+              );
+            },
+            onAddService: () {},
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSignOutButton(AuthProvider authProvider) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      child: ElevatedButton.icon(
+        onPressed: () => handleSignOut(authProvider),
+        icon: const Icon(Icons.logout, color: Colors.white),
+        label: const Text('Sign Out', style: TextStyle(color: Colors.white)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+        ),
+      ),
+    );
+  }
+} 
