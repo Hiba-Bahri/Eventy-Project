@@ -93,6 +93,7 @@ class ServiceProvider with ChangeNotifier {
 
   Future<void> addService({
     required String userId,
+    required String state,
     required String category,
     required String description,
     required double fee,
@@ -103,6 +104,7 @@ class ServiceProvider with ChangeNotifier {
     try {
       await servicesService.addService(
         userId: userId,
+        state: state,
         category: category,
         description: description,
         fee: fee,
@@ -110,6 +112,8 @@ class ServiceProvider with ChangeNotifier {
         label: label,
         experience: experience,
       );
+      getMyServices();
+      notifyListeners();
       showToast(message: 'Service added successfully!');
     } catch (e) {
       showToast(message: 'Failed to add service: $e');
