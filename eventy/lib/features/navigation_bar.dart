@@ -1,9 +1,11 @@
 import 'package:eventy/core/providers/auth_provider.dart';
+import 'package:eventy/core/providers/notification_provider.dart';
 import 'package:eventy/core/providers/chat_provider.dart';
 import 'package:eventy/features/authentication/screens/login.dart';
 import 'package:eventy/features/chat/screens/conversations_List.dart';
 import 'package:eventy/features/event_management/screens/schedule_event.dart';
 import 'package:eventy/features/home/screens/home.dart';
+import 'package:eventy/features/notifications/my_offers.dart';
 import 'package:eventy/features/profile/screens/profile.dart';
 import 'package:eventy/features/user_events/screens/user_events.dart';
 import 'package:eventy/features/user_services/screens/user_services.dart';
@@ -67,6 +69,7 @@ Future<void> _fetchUnreadMessages() async {
     );
   }
 
+   @override
   Widget _buildChatIconWithBadge() {
   final chatService = Provider.of<ChatProvider>(context, listen: false);
 
@@ -117,71 +120,76 @@ Future<void> _fetchUnreadMessages() async {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(builder: (context, authProvider, _) {
-      if (!authProvider.isLoggedIn) {
-        return const Login();
-      }
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, _) {
+        if (!authProvider.isLoggedIn) {
+          return const Login();
+        }
 
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Flutter App'),
-          backgroundColor: Colors.green,
-          leading: IconButton(
-            icon: const Icon(Icons.account_circle),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const UserProfilePage(),
-                ),
-              );
-            },
-          ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.notifications),
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Flutter App'),
+            backgroundColor: Colors.green,
+            leading: IconButton(
+              icon: const Icon(Icons.account_circle),
               onPressed: () {
-                print("Notifications icon tapped");
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const UserProfilePage(),
+                  ),
+                );
               },
             ),
-          ],
-          iconTheme: const IconThemeData(color: Colors.white),
-          titleTextStyle: const TextStyle(color: Colors.white),
-        ),
-        body: Center(
-          child: _widgetOptions.elementAt(_selectedIndex),
-        ),
-        bottomNavigationBar: Stack(
-          children: [
-            BottomAppBar(
-              shape: const CircularNotchedRectangle(),
-              notchMargin: 6.0,
-              child: SizedBox(
-                height: 60,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildNavItem(Icons.home_filled, 0),
-                    _buildNavItem(Icons.event_note, 1),
-                    const SizedBox(width: 40),
-                    _buildNavItem(Icons.cases_rounded, 3),
-                    _buildChatIconWithBadge(), 
-                  ],
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.notifications, color: Colors.white,),    
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>  const MyOffers(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+          body: Center(
+            child: _widgetOptions.elementAt(_selectedIndex),
+          ),
+          bottomNavigationBar: Stack(
+            children: [
+              BottomAppBar(
+                shape: const CircularNotchedRectangle(),
+                notchMargin: 6.0,
+                child: SizedBox(
+                  height: 60,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildNavItem(Icons.home_filled, 0),
+                      _buildNavItem(Icons.event_note, 1),
+                      const SizedBox(width: 40),
+                      _buildNavItem(Icons.cases_rounded, 3),
+                      _buildChatIconWithBadge(),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              bottom: 10,
-              left: MediaQuery.of(context).size.width / 2 - 28,
-              child: FloatingActionButton(
-                onPressed: () => _onItemTapped(2),
-                backgroundColor: Colors.green,
-                child: const Icon(Icons.add, color: Colors.white),
+              Positioned(
+                bottom: 10,
+                left: MediaQuery.of(context).size.width / 2 - 28,
+                child: FloatingActionButton(
+                  onPressed: () => _onItemTapped(2),
+                  backgroundColor: Colors.green,
+                  child: const Icon(Icons.add, color: Colors.white),
+                ),
               ),
-            ),
-          ],
-        ),
-      );
-    });
+            ],
+          ),
+        );
+      },
+    );
   }
 }

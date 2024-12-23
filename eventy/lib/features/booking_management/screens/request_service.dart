@@ -1,102 +1,162 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eventy/core/providers/request_service_provider.dart';
+import 'package:eventy/features/booking_management/screens/widgets/serviceCard.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class ServiceProvidersPage extends StatelessWidget {
-  final String serviceName;
-  final String eventId; // Add eventId here
-  final String userId; // Add userId here
+class RequestService extends StatefulWidget {
+  final String eventId;
+  final String userId;
 
-  const ServiceProvidersPage({
+  const RequestService({
     super.key,
-    required this.serviceName,
     required this.eventId,
     required this.userId,
   });
 
-  void _saveRequest(BuildContext context, String providerId) async {
-    // Save request to Firestore
-    final request = {
-      'userId': userId,
-      'providerId': providerId,
-      'eventId': eventId,
-      'status': 'Pending',
-      'timestamp': FieldValue.serverTimestamp(),
-    };
+  @override
+  _RequestServiceState createState() => _RequestServiceState();
+}
 
-    try {
-      await FirebaseFirestore.instance.collection('requests').add(request);
-      if (context.mounted) {
-      // Show a success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Request sent successfully!')),
-      );
-      Navigator.of(context).pop();
-      }
-    } catch (e) {
-    if (context.mounted) {
-      // Show an error message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send request: $e')),
-      );
-    }
-  }
+class _RequestServiceState extends State<RequestService> {
+  // Add the categories list as a class field
+  final List<String> categories = [
+    'Catering',
+    'Audio',
+    'Visual',
+    'Security',
+    'Photography',
+    'Cake',
+    'Decorations',
+    'Entertainment',
+    'Transportation',
+    'Stage Setup',
+    'Lighting',
+    'Food Stalls',
+    'First Aid'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<RequestServiceProvider>().init(widget.userId);
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('$serviceName Providers'),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection('services')
-              .where('category', isEqualTo: serviceName)
-              .snapshots(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              return const Center(child: Text('No providers found.'));
-            }
-
-            final providers = snapshot.data!.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
-
-            return ListView.builder(
-              itemCount: providers.length,
-              itemBuilder: (context, index) {
-                final provider = providers[index];
-                return ListTile(
-                  title: Text(
-                    provider['label'] ?? '',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  subtitle: Text(
-                    provider['description'] ?? '',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
-                  ),
-                  leading: CircleAvatar(
-                    child: Text(
-                      provider['label']?.substring(0, 1) ?? '',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+    return Consumer<RequestServiceProvider>(
+      builder: (context, provider, child) {
+        final currentRequest = provider.currentRequest;
+        
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Request Services'),
+            centerTitle: true,
+            backgroundColor: const Color(0xFF3498db),
+          ),
+          body: Column(
+            children: [
+              // Dropdown Filter
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  children: [
+                    const Text(
+                      'Filter by Category: ',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                  ),
-                  trailing: const Icon(Icons.contact_mail),
-                  onTap: () {
-                     _saveRequest(context, provider['userId']);
-                    Navigator.of(context).pop();
-                    // Action when tapping a provider
-                  },
-                );
-              },
-            );
-          },
-        ),
-      ),
+                    Expanded(
+                      child: DropdownButton<String>(
+                        value: provider.selectedCategory,
+                        isExpanded: true,
+                        hint: const Text('Select a category'),
+                        items: [
+                          const DropdownMenuItem(
+                            value: 'All',
+                            child: Text('All Categories'),
+                          ),
+                          ...categories.map((category) {
+                            return DropdownMenuItem(
+                              value: category,
+                              child: Text(category),
+                            );
+                          }),
+                        ],
+                        onChanged: (value) {
+                          provider.filterServices(value);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(),
+              // List of Services
+              Expanded(
+                child: provider.filteredServices.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No services available.',
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: provider.filteredServices.length,
+                        itemBuilder: (context, index) {
+                          final service = provider.filteredServices[index];
+                          final isRequested = currentRequest != null &&
+                              currentRequest['serviceId'] == service['id'];
+                          final isCategoryLocked = currentRequest != null &&
+                              currentRequest['category'] == service['category'] &&
+                              !isRequested;
+
+                          return ServiceCard(
+                            service: service,
+                            isRequested: isRequested,
+                            isCategoryLocked: isCategoryLocked,
+                            onRequest: () async {
+                                try {
+                                  // Send the service request and get the requestId
+                                  final requestId = await provider.sendRequest(
+                                    eventId: widget.eventId,
+                                    userId: widget.userId,
+                                    service: service,
+                                  );
+
+                                  // Send the notification with the requestId
+                                  /* await provider.sendNotification(
+                                    receiverId: service['userId'],
+                                    message: 'New service request for ${service['label']}',
+                                    requestId: requestId, // Pass the requestId here
+                                  ); */
+
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Service request sent successfully!'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error: ${e.toString()}'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                    print('Error sending request: $e');
+                                  }
+                                }
+                              },
+                          );  
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

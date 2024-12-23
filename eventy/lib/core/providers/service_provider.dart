@@ -85,6 +85,12 @@ class ServiceProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  //Get Service By Id
+  Future<Map<String, dynamic>?> getServiceDetails(String serviceId) async {
+    final service = await servicesService.getServiceById(serviceId);
+    return service;
+  }
+
   Future<void> addService({
     required String userId,
     required String state,

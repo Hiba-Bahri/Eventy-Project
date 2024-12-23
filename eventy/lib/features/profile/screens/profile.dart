@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eventy/core/providers/auth_provider.dart';
+import 'package:eventy/core/providers/notification_provider.dart';
 import 'package:eventy/features/authentication/screens/login.dart';
 import 'package:eventy/shared/widgets/toast.dart';
 import 'package:flutter/material.dart';
@@ -98,18 +99,30 @@ class _UserProfilePageState extends State<UserProfilePage> {
     });
 
     try {
+      // Clear notifications first
+      //final notificationProvider = Provider.of<NotificationProvider>(context, listen: false);
+      //await notificationProvider.clearListeners(); // Make sure this completes first
+
+      // Then logout
       await authProvider.logout();
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const Login(),
-        ),
-      );
+
+      // Finally navigate
+      if (mounted) { // Check if widget is still mounted
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const Login(),
+          ),
+          (route) => false, // This removes all previous routes
+        );
+      }
     } catch (e) {
-      showToast(message: "Sign-out failed: $e");
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) { // Check if widget is still mounted
+        showToast(message: "Sign-out failed: $e");
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 

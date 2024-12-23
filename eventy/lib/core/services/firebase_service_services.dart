@@ -84,4 +84,13 @@ class FirebaseServiceServices {
       return false;
     }
   }
-}
+  //Get Service By ID :
+  Future<Map<String, dynamic>?> getServiceById(String serviceId) async {
+   final DocumentSnapshot doc = await _firestore.collection('services').doc(serviceId).get();
+   if(!doc.exists) return null;
+   return{
+      'id': doc.id,
+      ...doc.data() as Map<String, dynamic>,
+    };
+   }
+  }
