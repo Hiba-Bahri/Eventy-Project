@@ -4,15 +4,16 @@ import 'package:eventy/shared/widgets/toast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class FirebaseAuthService {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth auth;
+  final FirebaseFirestore firestore;
 
-  Future<User?> signInWithEmailAndPassword(String email, String password) async {
+  FirebaseAuthService({required this.auth, required this.firestore});
+
+  Future<User?> signInWithEmailAndPassword(
+      String email, String password) async {
     try {
-      UserCredential credential = await _auth.signInWithEmailAndPassword(
-        email: email, 
-        password: password
-      );
+      UserCredential credential = await auth.signInWithEmailAndPassword(
+          email: email, password: password);
       return credential.user;
     } on FirebaseAuthException catch (e) {
       String message = _getAuthErrorMessage(e.code);
@@ -25,39 +26,33 @@ class FirebaseAuthService {
   }
 
   Future<User?> signUpWithEmailAndPassword(
-    String email, 
-    String password, 
-    String username
-  ) async {
+      String email, String password, String username) async {
     try {
       if (email.isEmpty || password.isEmpty || username.isEmpty) {
         showToast(message: 'Please fill in all fields');
         return null;
       }
 
-      UserCredential credential = await _auth.createUserWithEmailAndPassword(
-        email: email, 
+      UserCredential credential = await auth.createUserWithEmailAndPassword(
+        email: email,
         password: password,
       );
-      
+
       if (credential.user != null) {
-        
         await _createUserDocument(
           credential.user!.uid,
           email.trim(),
           username.trim(),
         );
-        
+
         return credential.user;
       } else {
         return null;
       }
-
     } on FirebaseAuthException catch (e) {
       String message = _getAuthErrorMessage(e.code);
       showToast(message: message);
       return null;
-      
     } catch (e) {
       showToast(message: 'An unexpected error occurred');
       return null;
@@ -65,8 +60,8 @@ class FirebaseAuthService {
   }
 
   Future<void> _createUserDocument(
-    String uid, 
-    String email, 
+    String uid,
+    String email,
     String username,
   ) async {
     try {
@@ -79,15 +74,11 @@ class FirebaseAuthService {
 
       final userData = newUser.toJson();
 
-      await _firestore
-          .collection('users')
-          .doc(uid)
-          .set(userData);
-          
+      await firestore.collection('users').doc(uid).set(userData);
     } catch (e) {
       showToast(message: 'Failed to create user profile');
       try {
-        await _auth.currentUser?.delete();
+        await auth.currentUser?.delete();
       } catch (deleteError) {}
       rethrow;
     }
@@ -95,9 +86,9 @@ class FirebaseAuthService {
 
   Future<UserModel.User?> getUserData(String uid) async {
     try {
-      DocumentSnapshot<Map<String, dynamic>> doc = 
-          await _firestore.collection('users').doc(uid).get();
-      
+      DocumentSnapshot<Map<String, dynamic>> doc =
+          await firestore.collection('users').doc(uid).get();
+
       if (doc.exists) {
         return UserModel.User.fromSnapshot(doc);
       }
@@ -110,10 +101,7 @@ class FirebaseAuthService {
 
   Future<bool> updateUserData(String uid, Map<String, dynamic> data) async {
     try {
-      await _firestore
-          .collection('users')
-          .doc(uid)
-          .update(data);
+      await firestore.collection('users').doc(uid).update(data);
       return true;
     } catch (e) {
       showToast(message: 'Failed to update user data');
@@ -123,14 +111,14 @@ class FirebaseAuthService {
 
   Future<void> signOut() async {
     try {
-      await _auth.signOut();
+      await auth.signOut();
     } catch (e) {
       showToast(message: 'Failed to sign out');
     }
   }
 
   User? getCurrentUser() {
-    return _auth.currentUser;
+    return auth.currentUser;
   }
 
   String _getAuthErrorMessage(String code) {

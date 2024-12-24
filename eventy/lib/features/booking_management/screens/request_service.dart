@@ -1,5 +1,5 @@
 import 'package:eventy/core/providers/request_service_provider.dart';
-import 'package:eventy/features/booking_management/screens/widgets/serviceCard.dart';
+import 'package:eventy/features/booking_management/widgets/serviceCard.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 

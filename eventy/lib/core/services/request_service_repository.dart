@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RequestServiceRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore firestore;
+
+  RequestServiceRepository({required this.firestore});
 
   Stream<List<Map<String, dynamic>>> getServicesStream() {
-    return _firestore.collection('services').snapshots().map((snapshot) {
+    return firestore.collection('services').snapshots().map((snapshot) {
       return snapshot.docs.map((doc) {
         return {
           "id": doc.id,
@@ -16,7 +18,7 @@ class RequestServiceRepository {
 
 
   Stream<Map<String, dynamic>?> getUserRequestStream(String userId) {
-    return _firestore
+    return firestore
         .collection('requests')
         .where('userId', isEqualTo: userId)
         .where('status', isEqualTo: 'Pending')
@@ -31,7 +33,7 @@ class RequestServiceRepository {
   }
 
   Future<List<Map<String, dynamic>>> fetchServiceRequests(String eventId, String userId) async {
-    final QuerySnapshot snapshot = await _firestore
+    final QuerySnapshot snapshot = await firestore
         .collection('requests')
         .where('eventId', isEqualTo: eventId)
         .where('userId', isEqualTo: userId)
@@ -52,7 +54,7 @@ class RequestServiceRepository {
   required String serviceLabel,
   required String category,
 }) async {
-  final requestRef = await _firestore.collection('requests').add({
+  final requestRef = await firestore.collection('requests').add({
     'eventId': eventId,
     'userId': userId,
     'serviceId': serviceId,
@@ -67,7 +69,7 @@ class RequestServiceRepository {
   Stream<List<Map<String, dynamic>>> getServiceRequestsStream(String eventId, String userId) {
     // Implement the logic to fetch and stream service requests
     // This is just an example - adjust according to your data source (Firestore, REST API, etc.)
-    return _firestore
+    return firestore
         .collection('requests')
         .where('eventId', isEqualTo: eventId)
         .where('userId', isEqualTo: userId)
@@ -84,7 +86,7 @@ class RequestServiceRepository {
     
   }) async {
     try {
-      await _firestore.collection('notifications').add({
+      await firestore.collection('notifications').add({
         'senderId': senderId,
         'receiverId': receiverId,
         'message': message,
@@ -98,7 +100,7 @@ class RequestServiceRepository {
   } */
   //GET Request By ID
   Future<Map<String, dynamic>?> getRequestById(String requestId) async {
-    final DocumentSnapshot doc = await _firestore.collection('requests').doc(requestId).get();
+    final DocumentSnapshot doc = await firestore.collection('requests').doc(requestId).get();
     if (!doc.exists) return null;
     return {
       'id': doc.id,
@@ -107,13 +109,13 @@ class RequestServiceRepository {
   }
   //Respond to Request
   Future<void> respondToRequest(String requestId, String status) async {
-    await _firestore.collection('requests').doc(requestId).update({
+    await firestore.collection('requests').doc(requestId).update({
       'status': status,
     });
   }
 
   Future<String?> getUserIdForService(String serviceId) async {
-  var docSnapshot = await _firestore.collection('services').doc(serviceId).get();
+  var docSnapshot = await firestore.collection('services').doc(serviceId).get();
   if (docSnapshot.exists) {
     return docSnapshot.data()?['userId']; // Assuming userId is stored in the service document
   }
@@ -126,7 +128,7 @@ class RequestServiceRepository {
       return Stream.value([]); // Return empty list if userId is null
     }
 
-    return _firestore
+    return firestore
         .collection('requests')
         .where('serviceId', isEqualTo: serviceId)
         .where('userId', isEqualTo: userId)
@@ -137,7 +139,7 @@ class RequestServiceRepository {
   });
 }
 Stream<List<Map<String, dynamic>>> getRequestsForServiceOwner(String ownerId) {
-    return _firestore
+    return firestore
         .collection('services')
         .where('userId', isEqualTo: ownerId)
         .snapshots()
@@ -148,7 +150,7 @@ Stream<List<Map<String, dynamic>>> getRequestsForServiceOwner(String ownerId) {
           if (serviceIds.isEmpty) return [];
 
           // Get all requests for these services
-          final requestsSnapshot = await _firestore
+          final requestsSnapshot = await firestore
               .collection('requests')
               .where('serviceId', whereIn: serviceIds)
               .get();

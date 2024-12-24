@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -5,7 +6,7 @@ import 'package:eventy/core/services/firebase_auth_services.dart';
 import 'package:eventy/data/models/User.dart' as UserModel;
 
 class AuthProvider with ChangeNotifier {
-  final FirebaseAuthService _authService = FirebaseAuthService();
+  final FirebaseAuthService _authService = FirebaseAuthService(firestore: FirebaseFirestore.instance, auth: FirebaseAuth.instance);
   User? _user;
   UserModel.User? _fetchedUser;
   bool _isLoggedIn = false;

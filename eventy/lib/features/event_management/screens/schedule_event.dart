@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eventy/core/services/firestore_events_management.dart';
 import 'package:eventy/features/event_management/widgets/custom_date_picker.dart';
 import 'package:eventy/features/event_management/widgets/custom_dropdown_field.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class ScheduleEvent extends StatefulWidget {
@@ -17,14 +19,22 @@ class _ScheduleEventState extends State<ScheduleEvent> {
   final Map<String, String> _selectedServiceProviders = {};
   final List<String> _additionalServices = [];
   DateTime? _eventDateTime;
-  final FirestoreEventService _eventService = FirestoreEventService();
+  final FirestoreEventService _eventService = FirestoreEventService(
+      firebaseAuth: FirebaseAuth.instance,
+      firestore: FirebaseFirestore.instance);
 
   // Event types and their corresponding services
   final Map<String, List<String>> _eventServices = {
     'Conference': ['Catering', 'Audio', 'Visual', 'Security'],
     'Wedding': ['Photography', 'Catering', 'Audio'],
     'Birthday': ['Cake', 'Decorations', 'Entertainment'],
-    'Corporate Meeting': ['Catering', 'Audio', 'Visual', 'Security', 'Transportation'],
+    'Corporate Meeting': [
+      'Catering',
+      'Audio',
+      'Visual',
+      'Security',
+      'Transportation'
+    ],
     'Concert': ['Stage Setup', 'Audio', 'Lighting', 'Security'],
     'Festival': ['Food Stalls', 'Entertainment', 'Security', 'First Aid'],
   };
@@ -61,54 +71,53 @@ class _ScheduleEventState extends State<ScheduleEvent> {
   }
 
   Future<void> _saveEvent() async {
-  // Validate all required fields are filled
-  if (_selectedEventType == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please select an event type')),
-    );
-    return;
+    // Validate all required fields are filled
+    if (_selectedEventType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an event type')),
+      );
+      return;
+    }
+
+    if (_eventDateTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select an event date and time')),
+      );
+      return;
+    }
+
+    try {
+      // Get the required services for the selected event type
+      final requiredServices = _eventServices[_selectedEventType!]!;
+
+      // Create a map of services with null values
+      final services = {
+        for (var service in requiredServices) service.toLowerCase(): null
+      };
+
+      // Save the event to Firestore with the new structure
+      await _eventService.saveEvent(
+        eventType: _selectedEventType!,
+        eventDateTime: _eventDateTime!,
+        services: services,
+      );
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Event successfully scheduled!')),
+      );
+
+      // Reset the form
+      setState(() {
+        _selectedEventType = null;
+        _eventDateTime = null;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to schedule event: $e')),
+      );
+    }
   }
-
-  if (_eventDateTime == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please select an event date and time')),
-    );
-    return;
-  }
-
-  try {
-    // Get the required services for the selected event type
-    final requiredServices = _eventServices[_selectedEventType!]!;
-    
-    // Create a map of services with null values
-    final services = {
-      for (var service in requiredServices) 
-        service.toLowerCase(): null
-    };
-
-    // Save the event to Firestore with the new structure
-    await _eventService.saveEvent(
-      eventType: _selectedEventType!,
-      eventDateTime: _eventDateTime!,
-      services: services,
-    );
-
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Event successfully scheduled!')),
-    );
-
-    // Reset the form
-    setState(() {
-      _selectedEventType = null;
-      _eventDateTime = null;
-    });
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to schedule event: $e')),
-    );
-  }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -200,27 +209,28 @@ class _ScheduleEventState extends State<ScheduleEvent> {
               },
             ),
 
-            if( _selectedEventType == null) ...[
+            if (_selectedEventType == null) ...[
               const SizedBox(height: 210),
               Center(
                 child: Column(
-                  children: [                  
-                  Icon(
-                    Icons.event_note,
-                    color: Colors.blue.shade200,
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Start by selecting an event type to schedule your event.',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.grey.shade700,
+                  children: [
+                    Icon(
+                      Icons.event_note,
+                      color: Colors.blue.shade200,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    Text(
+                      'Start by selecting an event type to schedule your event.',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Colors.grey.shade700,
+                          ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-            //Required Services    
+            ],
+            //Required Services
             if (_selectedEventType != null) ...[
               const SizedBox(height: 16),
               Text(
@@ -234,20 +244,26 @@ class _ScheduleEventState extends State<ScheduleEvent> {
                 itemCount: _eventServices[_selectedEventType!]!.length,
                 itemBuilder: (context, index) {
                   final service = _eventServices[_selectedEventType!]![index];
-                  final isSelected = _selectedServiceProviders.containsKey(service);
+                  final isSelected =
+                      _selectedServiceProviders.containsKey(service);
 
                   return Container(
                     margin: const EdgeInsets.symmetric(vertical: 8),
                     decoration: BoxDecoration(
-                      color: isSelected ? Colors.green.shade50 : Colors.grey.shade100,
+                      color: isSelected
+                          ? Colors.green.shade50
+                          : Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isSelected ? Colors.green.shade200 : Colors.grey.shade300,
+                        color: isSelected
+                            ? Colors.green.shade200
+                            : Colors.grey.shade300,
                         width: 1,
                       ),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -256,7 +272,10 @@ class _ScheduleEventState extends State<ScheduleEvent> {
                             children: [
                               Text(
                                 service,
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyLarge
+                                    ?.copyWith(
                                       fontWeight: FontWeight.w600,
                                       color: Colors.black87,
                                     ),
@@ -264,14 +283,20 @@ class _ScheduleEventState extends State<ScheduleEvent> {
                               if (isSelected)
                                 Text(
                                   'Provider: ${_selectedServiceProviders[service]}',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
                                         color: Colors.grey.shade600,
                                       ),
                                 )
                               else
                                 Text(
                                   'No provider selected',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
                                         color: Colors.grey.shade500,
                                         fontStyle: FontStyle.italic,
                                       ),
@@ -287,8 +312,7 @@ class _ScheduleEventState extends State<ScheduleEvent> {
             ],
 
             // Create Event Button
-            if (_selectedEventType != null &&
-                _eventDateTime != null)...[
+            if (_selectedEventType != null && _eventDateTime != null) ...[
               const SizedBox(height: 24),
               Container(
                 width: double.infinity,
@@ -313,7 +337,8 @@ class _ScheduleEventState extends State<ScheduleEvent> {
                     borderRadius: BorderRadius.circular(12),
                     onTap: _saveEvent,
                     child: const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                      padding:
+                          EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                       child: Center(
                         child: Text(
                           'Create Event',

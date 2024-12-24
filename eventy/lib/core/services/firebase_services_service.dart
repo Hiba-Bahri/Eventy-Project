@@ -3,14 +3,17 @@ import 'package:eventy/data/models/Service.dart' as ServiceModel;
 import 'package:eventy/shared/widgets/toast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class FirebaseServiceServices {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+class FirebaseServicesService {
+  final FirebaseFirestore firestore;
+  final FirebaseAuth firebaseAuth;
+
+    FirebaseServicesService({required this.firebaseAuth, required this.firestore});
+
 
   Future<List<ServiceModel.Service>> getAllServices() async {
     try {
       QuerySnapshot querySnapshot =
-          await _firestore.collection('services').get();
+          await firestore.collection('services').get();
       List<ServiceModel.Service> services = [];
       for (QueryDocumentSnapshot doc in querySnapshot.docs) {
         services.add(ServiceModel.Service.fromSnapshot(
@@ -27,9 +30,9 @@ class FirebaseServiceServices {
   Future<List<ServiceModel.Service>> getMyServices() async {
     try {
       
-      QuerySnapshot querySnapshot = await _firestore
+      QuerySnapshot querySnapshot = await firestore
           .collection('services')
-          .where('userId', isEqualTo: _auth.currentUser!.uid)
+          .where('userId', isEqualTo: firebaseAuth.currentUser!.uid)
           .get();
           print("------------my services-------------$querySnapshot");
 
@@ -57,6 +60,13 @@ class FirebaseServiceServices {
     required int experience,
   }) async {
     try {
+
+      final User? currentUser = firebaseAuth.currentUser;
+
+      if (currentUser == null) {
+        throw Exception('No user logged in');
+      }
+
       final serviceData = {
         'state': state,
         'category': category,
@@ -68,7 +78,7 @@ class FirebaseServiceServices {
         'userId': userId,
       };
 
-      await FirebaseFirestore.instance.collection('services').add(serviceData);
+      await firestore.collection('services').add(serviceData);
     } catch (e) {
       throw Exception('Failed to add service: $e');
     }
@@ -77,7 +87,7 @@ class FirebaseServiceServices {
   Future<bool> updateServiceData(
       String serviceId, Map<String, dynamic> data) async {
     try {
-      await _firestore.collection('services').doc(serviceId).update(data);
+      await firestore.collection('services').doc(serviceId).update(data);
       return true;
     } catch (e) {
       showToast(message: 'Failed to update service data');
@@ -87,7 +97,7 @@ class FirebaseServiceServices {
 
 Future<String> deleteService(String serviceId) async {
   try {
-    await _firestore.collection('services').doc(serviceId).delete();
+    await firestore.collection('services').doc(serviceId).delete();
     return 'Service deleted successfully';
   } catch (e) {
     showToast(message: 'Failed to delete service data');
@@ -98,7 +108,7 @@ Future<String> deleteService(String serviceId) async {
 
   //Get Service By ID :
   Future<Map<String, dynamic>?> getServiceById(String serviceId) async {
-   final DocumentSnapshot doc = await _firestore.collection('services').doc(serviceId).get();
+   final DocumentSnapshot doc = await firestore.collection('services').doc(serviceId).get();
    if(!doc.exists) return null;
    return{
       'id': doc.id,

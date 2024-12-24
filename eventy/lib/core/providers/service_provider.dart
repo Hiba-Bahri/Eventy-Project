@@ -1,11 +1,16 @@
-import 'package:eventy/core/services/firebase_service_services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:eventy/core/services/firebase_services_service.dart';
 import 'package:eventy/data/models/Service.dart';
 import 'package:eventy/shared/widgets/toast.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class ServiceProvider with ChangeNotifier {
-  final servicesService = FirebaseServiceServices();
+
+  final FirebaseServicesService _servicesService = FirebaseServicesService(
+      firebaseAuth: FirebaseAuth.instance,
+      firestore: FirebaseFirestore.instance);
+
   bool loading = true;
   List<Service> services = [];
   List<Service> currentUserServices = [];
@@ -14,7 +19,7 @@ class ServiceProvider with ChangeNotifier {
 
   Future<void> getServices() async {
     try {
-      services = await servicesService.getAllServices();
+      services = await _servicesService.getAllServices();
       filteredServices = services;
       loading = false;
       notifyListeners();
@@ -25,7 +30,7 @@ class ServiceProvider with ChangeNotifier {
 
   Future<void> getMyServices() async {
     try {
-      currentUserServices = await servicesService.getMyServices();
+      currentUserServices = await _servicesService.getMyServices();
       print("------------------------$currentUserServices");
       loading = false;
       notifyListeners();
@@ -87,7 +92,7 @@ class ServiceProvider with ChangeNotifier {
 
   //Get Service By Id
   Future<Map<String, dynamic>?> getServiceDetails(String serviceId) async {
-    final service = await servicesService.getServiceById(serviceId);
+    final service = await _servicesService.getServiceById(serviceId);
     return service;
   }
 
@@ -102,7 +107,7 @@ class ServiceProvider with ChangeNotifier {
     required int experience,
   }) async {
     try {
-      await servicesService.addService(
+      await _servicesService.addService(
         userId: userId,
         state: state,
         category: category,
@@ -123,7 +128,7 @@ class ServiceProvider with ChangeNotifier {
 
 Future<void> deleteService(String id) async {
   try {
-    final result = await servicesService.deleteService(id);
+    final result = await _servicesService.deleteService(id);
 
     if (result == 'Service deleted successfully') {
       await getMyServices();
@@ -138,7 +143,7 @@ Future<void> deleteService(String id) async {
 
 Future<Service?> fetchServiceById(String serviceId) async {
   try {
-    final serviceData = await servicesService.getServiceById(serviceId);
+    final serviceData = await _servicesService.getServiceById(serviceId);
     if (serviceData != null) {
       return Service(
         id: serviceData['id'],
@@ -160,8 +165,7 @@ Future<Service?> fetchServiceById(String serviceId) async {
 }
 
   Future<bool> updateServiceData(String serviceId, Map<String, dynamic> data) async {
-    final serviceService = FirebaseServiceServices();
-    final result = await serviceService.updateServiceData(serviceId, data);
+    final result = await _servicesService.updateServiceData(serviceId, data);
     if (result) {
       await getMyServices();
     }

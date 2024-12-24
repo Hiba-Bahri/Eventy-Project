@@ -1,4 +1,4 @@
-import 'package:eventy/core/providers/auth_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eventy/core/providers/chat_provider.dart';
 import 'package:eventy/core/providers/event_details_provider.dart';
 import 'package:eventy/core/providers/request_service_provider.dart';
@@ -11,6 +11,8 @@ import 'package:eventy/features/navigation_bar.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:eventy/core/providers/auth_provider.dart';
+
 
 void main() async{
   const mockEventId = 'mockEventId';
@@ -23,7 +25,7 @@ void main() async{
         ChangeNotifierProvider(create: (_) => ServiceProvider()),
         ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => EventDetailsProvider(eventService: EventService(), eventId: mockEventId, userId: mockUserId)),
-        ChangeNotifierProvider(create: (_) => RequestServiceProvider(RequestServiceRepository())),
+        ChangeNotifierProvider(create: (_) => RequestServiceProvider(RequestServiceRepository(firestore: FirebaseFirestore.instance))),
         ChangeNotifierProvider(create: (_) => UserProfileProvider()),
         //ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
